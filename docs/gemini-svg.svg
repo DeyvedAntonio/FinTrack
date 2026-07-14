@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="100%" height="100%" style="background-color: #F8FAFC; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
+  <!-- Definitions for gradients and shadows -->
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#1E293B" flood-opacity="0.08" />
+    </filter>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="darkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748B" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#2563EB" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="50" y="55" font-size="22" font-weight="700" fill="#1F2937">MAPA DE TELAS - FINTRACK v1</text>
+  <text x="50" y="80" font-size="13" font-weight="400" fill="#64748B">Fluxo de navegação e arquitetura de telas do MVP (baseado no PRD)</text>
+
+  <!-- Legend -->
+  <g transform="translate(680, 40)">
+    <rect width="270" height="50" rx="6" fill="#FFFFFF" stroke="#E2E8F0" filter="url(#shadow)" />
+    <circle cx="20" cy="25" r="6" fill="#2563EB" />
+    <text x="32" y="29" font-size="11" font-weight="500" fill="#475569">Público / Autenticação</text>
+    
+    <circle cx="150" cy="25" r="6" fill="#10B981" />
+    <text x="162" y="29" font-size="11" font-weight="500" fill="#475569">Área Logada (App)</text>
+  </g>
+
+  <!-- ==================== AREA NÃO AUTENTICADA ==================== -->
+  <text x="180" y="140" font-size="12" font-weight="600" fill="#94A3B8" letter-spacing="1">PÁGINAS PÚBLICAS</text>
+  <line x1="50" y1="150" x2="410" y2="150" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="4 4" />
+
+  <!-- Tela: Cadastro -->
+  <g transform="translate(50, 180)" filter="url(#shadow)">
+    <rect width="150" height="90" rx="8" fill="#FFFFFF" stroke="#3B82F6" stroke-width="2" />
+    <rect width="150" height="28" rx="6" fill="url(#blueGrad)" />
+    <text x="75" y="18" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">Cadastro</text>
+    <text x="15" y="48" font-size="10" fill="#64748B">• Nome, E-mail, Senha</text>
+    <text x="15" y="62" font-size="10" fill="#64748B">• Confirmar senha</text>
+    <text x="15" y="76" font-size="9" font-weight="600" fill="#2563EB">Form: Cadastrar</text>
+  </g>
+
+  <!-- Tela: Login (Centralizador da Entrada) -->
+  <g transform="translate(260, 180)" filter="url(#shadow)">
+    <rect width="150" height="90" rx="8" fill="#FFFFFF" stroke="#2563EB" stroke-width="3" />
+    <rect width="150" height="28" rx="6" fill="url(#blueGrad)" />
+    <text x="75" y="18" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">🔒 Login (Home)</text>
+    <text x="15" y="48" font-size="10" fill="#64748B">• E-mail, Senha</text>
+    <text x="15" y="62" font-size="10" fill="#64748B">• Recuperar conta</text>
+    <text x="15" y="76" font-size="9" font-weight="600" fill="#2563EB">Acesso Principal</text>
+  </g>
+
+  <!-- Tela: Recuperação de Senha -->
+  <g transform="translate(50, 310)" filter="url(#shadow)">
+    <rect width="150" height="80" rx="8" fill="#FFFFFF" stroke="#3B82F6" stroke-width="2" />
+    <rect width="150" height="28" rx="6" fill="url(#blueGrad)" />
+    <text x="75" y="18" font-size="11" font-weight="700" fill="#FFFFFF" text-anchor="middle">Recuperar Senha</text>
+    <text x="15" y="48" font-size="10" fill="#64748B">• Solicitar via e-mail</text>
+    <text x="15" y="66" font-size="9" font-weight="600" fill="#2563EB">Form: Enviar link</text>
+  </g>
+
+
+  <!-- ==================== AREA AUTENTICADA ==================== -->
+  <text x="660" y="140" font-size="12" font-weight="600" fill="#94A3B8" letter-spacing="1">ÁREA AUTENTICADA (STREAMLIT APP)</text>
+  <line x1="470" y1="150" x2="950" y2="150" stroke="#E2E8F0" stroke-width="2" stroke-dasharray="4 4" />
+
+  <!-- Tela: Dashboard (Hub Principal) -->
+  <g transform="translate(530, 180)" filter="url(#shadow)">
+    <rect width="180" height="110" rx="8" fill="#FFFFFF" stroke="#10B981" stroke-width="3" />
+    <rect width="180" height="28" rx="6" fill="url(#greenGrad)" />
+    <text x="90" y="18" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">📊 Dashboard</text>
+    <text x="15" y="46" font-size="9" fill="#475569">• Cards: Receitas, Despesas, Saldo</text>
+    <text x="15" y="60" font-size="9" fill="#475569">• Gráficos interativos</text>
+    <text x="15" y="74" font-size="9" fill="#475569">• 5 Maiores Despesas</text>
+    <text x="15" y="88" font-size="9" fill="#475569">• Exportar CSV / Filtros</text>
+  </g>
+
+  <!-- Tela: Receitas -->
+  <g transform="translate(770, 180)" filter="url(#shadow)">
+    <rect width="180" height="90" rx="8" fill="#FFFFFF" stroke="#10B981" stroke-width="2" />
+    <rect width="180" height="28" rx="6" fill="url(#greenGrad)" />
+    <text x="90" y="18" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">💰 Receitas</text>
+    <text x="15" y="48" font-size="9" fill="#475569">• Cadastrar, Editar e Excluir</text>
+    <text x="15" y="62" font-size="9" fill="#475569">• Listagem, Buscas &amp; Filtros</text>
+    <text x="15" y="76" font-size="9" font-weight="600" fill="#10B981">Tabela de Lançamentos</text>
+  </g>
+
+  <!-- Tela: Despesas -->
+  <g transform="translate(770, 290)" filter="url(#shadow)">
+    <rect width="180" height="90" rx="8" fill="#FFFFFF" stroke="#10B981" stroke-width="2" />
+    <rect width="180" height="28" rx="6" fill="url(#greenGrad)" />
+    <text x="90" y="18" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">💸 Despesas</text>
+    <text x="15" y="48" font-size="9" fill="#475569">• Cadastrar, Editar e Excluir</text>
+    <text x="15" y="62" font-size="9" fill="#475569">• Forma de Pagamento</text>
+    <text x="15" y="76" font-size="9" font-weight="600" fill="#10B981">Tabela de Despesas</text>
+  </g>
+
+  <!-- Tela: Categorias -->
+  <g transform="translate(770, 400)" filter="url(#shadow)">
+    <rect width="180" height="90" rx="8" fill="#FFFFFF" stroke="#10B981" stroke-width="2" />
+    <rect width="180" height="28" rx="6" fill="url(#greenGrad)" />
+    <text x="90" y="18" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">🏷️ Categorias</text>
+    <text x="15" y="48" font-size="9" fill="#475569">• Criar, Editar, Excluir</text>
+    <text x="15" y="62" font-size="9" fill="#475569">• Vínculo de Tipo (Rec/Desp)</text>
+    <text x="15" y="76" font-size="9" font-weight="600" fill="#10B981">Gerenciador Ativo</text>
+  </g>
+
+  <!-- Tela: Perfil -->
+  <g transform="translate(770, 510)" filter="url(#shadow)">
+    <rect width="180" height="90" rx="8" fill="#FFFFFF" stroke="#10B981" stroke-width="2" />
+    <rect width="180" height="28" rx="6" fill="url(#greenGrad)" />
+    <text x="90" y="18" font-size="12" font-weight="700" fill="#FFFFFF" text-anchor="middle">👤 Meu Perfil</text>
+    <text x="15" y="48" font-size="9" fill="#475569">• Alterar Nome &amp; Moeda</text>
+    <text x="15" y="62" font-size="9" fill="#475569">• Upload de Foto (Opcional)</text>
+    <text x="15" y="76" font-size="9" font-weight="600" fill="#10B981">Configurações de Conta</text>
+  </g>
+
+
+  <!-- ==================== CONEXÕES E SETAS DE FLUXO ==================== -->
+
+  <!-- Conexão: Cadastro <-> Login -->
+  <path d="M 200 210 L 260 210" stroke="#2563EB" stroke-width="2" marker-end="url(#arrow-blue)" marker-start="url(#arrow-blue)" />
+  <text x="230" y="200" font-size="9" font-weight="600" fill="#2563EB" text-anchor="middle">Criar conta</text>
+
+  <!-- Conexão: Login <-> Recuperação -->
+  <path d="M 335 270 L 335 350 L 200 350" fill="none" stroke="#64748B" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow)" />
+  <text x="325" y="300" font-size="9" fill="#64748B" text-anchor="end">Esqueci senha</text>
+  
+  <path d="M 125 310 L 125 295 L 290 295 L 290 270" fill="none" stroke="#64748B" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="210" y="290" font-size="9" fill="#64748B" text-anchor="middle">Voltar ao Login</text>
+
+  <!-- Conexão: Login -> Dashboard (Autenticação Bem-sucedida) -->
+  <path d="M 410 225 L 530 225" stroke="#10B981" stroke-width="3" marker-end="url(#arrow-blue)" />
+  <rect x="425" y="213" width="90" height="18" rx="4" fill="#E0F2FE" />
+  <text x="470" y="226" font-size="9" font-weight="700" fill="#0369A1" text-anchor="middle">Fazer Login</text>
+
+  <!-- Conexão: Dashboard <-> Receitas -->
+  <path d="M 710 210 L 770 210" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-blue)" marker-start="url(#arrow-blue)" />
+  
+  <!-- Conexão: Dashboard <-> Despesas -->
+  <path d="M 680 290 L 680 335 L 770 335" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-blue)" marker-start="url(#arrow-blue)" />
+
+  <!-- Conexão: Dashboard <-> Categorias -->
+  <path d="M 650 290 L 650 445 L 770 445" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-blue)" marker-start="url(#arrow-blue)" />
+
+  <!-- Conexão: Dashboard <-> Perfil -->
+  <path d="M 620 290 L 620 555 L 770 555" fill="none" stroke="#10B981" stroke-width="2" marker-end="url(#arrow-blue)" marker-start="url(#arrow-blue)" />
+
+  <!-- Conexão: Logout global de qualquer página autenticada para o login -->
+  <path d="M 530 255 L 440 255 L 440 370 L 370 370 L 370 270" fill="none" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arrow)" />
+  <text x="415" y="360" font-size="9" font-weight="700" fill="#EF4444">Encerrar Sessão (Logout)</text>
+</svg>
