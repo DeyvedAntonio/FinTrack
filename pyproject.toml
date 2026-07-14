@@ -1,11 +1,10 @@
 [project]
 name = "fintrack"
 version = "0.1.0"
-description = "O FinTrack é uma aplicação web para controle financeiro pessoal que permite aos
-usuários registrar receitas e despesas, organizar movimentações por categorias e
-acompanhar indicadores financeiros por meio de um painel interativo."
+description = """O FinTrack é uma aplicação web para controle financeiro pessoal que permite aos usuários registrar receitas e despesas, 
+organizar movimentações por categorias e acompanhar indicadores financeiros por meio de um painel interativo."""
 authors = [
-    {name = "Deyved Antonio",email = "deyved.antonio@gmail.com"}
+    {name = "Deyved Antonio", email = "deyved.antonio@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,7 +13,9 @@ dependencies = [
     "djangorestframework (>=3.17.1,<4.0.0)",
     "python-decouple (>=3.8,<4.0)",
     "streamlit (>=1.59.2,<2.0.0)",
-    "pandas (>=3.0.3,<4.0.0)"
+    "pandas (>=3.0.3,<4.0.0)",
+    "django-extensions (>=4.1,<5.0)",
+    "psycopg2-binary (>=2.9.12,<3.0.0)"
 ]
 
 
