@@ -1,0 +1,9 @@
+from rest_framework.routers import DefaultRouter
+from .views import CategoriaViewSet
+
+app_name = 'categories'
+
+router = DefaultRouter()
+router.register(r'', CategoriaViewSet, basename='categoria')
+
+urlpatterns = router.urls

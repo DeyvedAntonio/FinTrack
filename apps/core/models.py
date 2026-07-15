@@ -25,6 +25,7 @@ class CreatedBy(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name='%(app_label)s_%(class)s_created',
         verbose_name='Criado por'
     )
 
@@ -38,6 +39,7 @@ class ModifiedBy(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name='%(app_label)s_%(class)s_modified',
         verbose_name='Modificado por'
     )
 

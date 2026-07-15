@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'apps.core',
     'apps.accounts',
+    'apps.categories',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
