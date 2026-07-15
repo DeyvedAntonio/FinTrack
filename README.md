@@ -48,16 +48,16 @@ A aplicação adota uma estrutura moderna dividida em duas camadas principais qu
 
 ## 🚀 Funcionalidades Atuais (v1 - MVP)
 
-- [] **Autenticação Segura:** Criação de conta, Login, Logout e fluxo de Recuperação de Senha por e-mail.
-- [] **Gestão de Perfil:** Atualização de dados pessoais, personalização da moeda de exibição (ex: R$, $) e upload de foto de perfil.
-- [] **Gerenciador de Categorias:** Organização personalizada de despesas e receitas por usuário com validação de tipo.
-- [] **Lançamento Unificado de Movimentações:** Cadastro rápido de entradas e saídas em um único fluxo simplificado.
-- [] **Painel de Indicadores (Dashboard):**
+- [X] **Autenticação Segura:** Criação de conta, Login, Logout e fluxo de Recuperação de Senha por e-mail.
+- [X] **Gestão de Perfil:** Atualização de dados pessoais, personalização da moeda de exibição (ex: R$, $) e upload de foto de perfil.
+- [X] **Gerenciador de Categorias:** Organização personalizada de despesas e receitas por usuário com validação de tipo.
+- [X] **Lançamento Unificado de Movimentações:** Cadastro rápido de entradas e saídas em um único fluxo simplificado.
+- [X] **Painel de Indicadores (Dashboard):**
   - KPI de Saldo Atual, Receitas e Despesas acumuladas.
   - Gráfico de Despesas por Categoria.
   - Histórico de Evolução Mensal do Saldo.
   - Listagem inteligente das 5 maiores despesas e últimos lançamentos.
-- [] **Exportação de Dados:** Download instantâneo de todas as movimentações filtradas em formato CSV para portabilidade.
+- [X] **Exportação de Dados:** Download instantâneo de todas as movimentações filtradas em formato CSV para portabilidade.
 
 ---
 
