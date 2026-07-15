@@ -177,7 +177,7 @@ Desejamos expandir o ecossistema do FinTrack trazendo lógicas analíticas herda
 
 Se você é um recrutador procurando um desenvolvedor focado em **Django, APIs escaláveis e arquitetura limpa**, ou um cliente interessado em customizações para a sua empresa, sinta-se à vontade para entrar em contato!
 
-* **Desenvolvedor:** Seu Nome Completo
-* **LinkedIn:** [linkedin.com/in/seu-perfil](https://linkedin.com/in/seu-perfil)
-* **Portfólio:** [seu-portfolio.dev](https://seu-portfolio.dev)
-* **E-mail:** [seu-email@dominio.com](mailto:seu-email@dominio.com)
+* **Desenvolvedor:** Deyved Antonio
+* **LinkedIn:** [linkedin.com/in/seu-perfil](https://linkedin.com/in/deyvedantonio)
+* **Portfólio:** [seu-portfolio.dev](https://sistemaslotus.com.br)
+* **E-mail:** [seu-email@dominio.com](mailto:deyved.antonio@gmail.com)
