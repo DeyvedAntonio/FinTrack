@@ -12,6 +12,18 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'nome', 'email', 'moeda', 'foto_perfil', 'date_joined')
         read_only_fields = ('id', 'date_joined')
 
+    def validate_email(self, value):
+        user = self.instance
+        if user and User.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError("Este e-mail já está sendo utilizado por outro usuário.")
+        return value
+
+    def update(self, instance, validated_data):
+        email = validated_data.get('email', instance.email)
+        if email != instance.email:
+            instance.username = email
+        return super().update(instance, validated_data)
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     nome = serializers.CharField(write_only=True, required=True)
@@ -57,7 +69,6 @@ class LoginSerializer(serializers.Serializer):
         if email and password:
             user = authenticate(request=self.context.get('request'), username=email, password=password)
             if not user:
-                # Tenta buscar pelo objeto de usuário se o username for diferente do email
                 try:
                     user_obj = User.objects.get(email=email)
                     user = authenticate(request=self.context.get('request'), username=user_obj.username, password=password)
@@ -72,6 +83,25 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("É necessário informar e-mail e senha.", code='authorization')
 
         attrs['user'] = user
+        return attrs
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+    confirm_new_password = serializers.CharField(required=True, write_only=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("A senha atual informada está incorreta.")
+        return value
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_new_password']:
+            raise serializers.ValidationError({"new_password": "A nova senha e a confirmação não conferem."})
+        if attrs['old_password'] == attrs['new_password']:
+            raise serializers.ValidationError({"new_password": "A nova senha deve ser diferente da senha atual."})
         return attrs
 
 
