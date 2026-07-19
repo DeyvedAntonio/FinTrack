@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from core.theme import apply_theme
 from core.session import init_session
@@ -14,25 +15,41 @@ st.set_page_config(
 apply_theme()
 init_session()
 
-# Cabeçalho da Aplicação
-st.markdown("""
-    <div style="text-align: center; padding: 1.5rem 0 2rem 0;">
-        <h1 style="font-size: 3rem; font-weight: 900; margin: 0; color: #1F2937; letter-spacing: -1px;">
-            <span style="color: #2563EB;">Fin</span>Track
-        </h1>
-        <p style="font-size: 1.1rem; color: #64748B; margin-top: 0.25rem;">
-            Sistema Inteligente de Gestão Financeira Pessoal
-        </p>
-    </div>
-""", unsafe_allow_html=True)
+# Caminho das imagens do sistema
+img_dir = os.path.join(os.path.dirname(__file__), "..", "img")
+img_dark = os.path.join(img_dir, "fintrack_dark2.png")
 
 # Se não estiver autenticado
 if not st.session_state["token"]:
-    _, col_center, _ = st.columns([1, 2, 1])
-    
-    with col_center:
+    st.markdown("""
+        <div style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); padding: 2rem 2.5rem; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4); margin-bottom: 2rem;">
+            <span style="background-color: rgba(37, 99, 235, 0.2); color: #60A5FA; font-size: 0.85rem; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 20px; border: 1px solid rgba(96, 165, 250, 0.3);">✨ Gestão Financeira Inteligente</span>
+            <h1 style="font-size: 2.8rem; font-weight: 900; color: #F9FAFB; margin: 0.75rem 0 0.25rem 0; letter-spacing: -1px;">
+                <span style="color: #3B82F6;">Fin</span>Track
+            </h1>
+            <p style="font-size: 1.1rem; color: #94A3B8; font-weight: 400; margin: 0;">
+                Sistema Inteligente de Gestão Financeira Pessoal & Controle de Investimentos
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col_left, col_right = st.columns([1, 1])
+
+    with col_left:
+        st.markdown("### 🚀 O que é o FinTrack?")
+        st.write("Uma plataforma completa e moderna para gerenciamento financeiro pessoal, integrando controle de receitas, despesas, cartões de crédito parcelados e gestão de carteira de investimentos com preço médio automático.")
+        
+        st.markdown("#### ✨ Funcionalidades Principais:")
+        st.markdown("• **📊 Dashboard & Indicadores**: Visão geral de saldo consolidado e gráficos de evolução.")
+        st.markdown("• **💰 Fluxo de Caixa**: Entradas e saídas operacionais com busca e exportação CSV.")
+        st.markdown("• **💳 Cartões de Crédito**: Apelidos, últimos 4 dígitos, datas de vencimento e compras parceladas.")
+        st.markdown("• **📈 Carteira de Investimentos**: Ativos, cálculo automático de Preço Médio e distribuição por classe.")
+        st.markdown("• **🏷️ Orçamentos por Categoria**: Teto mensal de despesas.")
+        st.markdown("• **🔒 Privacidade & LGPD**: Portabilidade de dados (Art. 18, V) e exclusão anonimizada (Art. 16, I).")
+
+    with col_right:
         if st.session_state["auth_mode"] == "login":
-            st.subheader("Entrar")
+            st.subheader("🔑 Entrar")
             st.caption("Acesse sua conta para gerenciar suas finanças.")
 
             with st.form("form_login"):
@@ -64,7 +81,7 @@ if not st.session_state["token"]:
                     st.rerun()
 
         elif st.session_state["auth_mode"] == "register":
-            st.subheader("Criar Conta")
+            st.subheader("📝 Criar Conta")
             st.caption("Cadastre-se gratuitamente no FinTrack.")
 
             with st.form("form_register"):
@@ -94,7 +111,7 @@ if not st.session_state["token"]:
                 st.rerun()
 
         elif st.session_state["auth_mode"] == "reset":
-            st.subheader("Recuperar Senha")
+            st.subheader("🔒 Recuperar Senha")
             st.caption("Informe seu e-mail para receber as instruções.")
 
             with st.form("form_reset"):
@@ -122,23 +139,36 @@ else:
     moeda = user.get("moeda", "BRL")
 
     with st.sidebar:
-        st.markdown(f"### Olá, **{nome_usuario}**!")
+        st.markdown(f"### Olá, **{nome_usuario}**! 👋")
         st.caption(f"Moeda Padrão: **{moeda}**")
         st.divider()
-        st.info("Navegue pelas páginas do menu acima para visualizar o Dashboard, Gerenciar Receitas, Despesas, Categorias ou seu Perfil.")
+        st.info("Navegue pelas páginas do menu lateral para visualizar seu Dashboard, Lançamentos, Cartões, Investimentos ou Perfil.")
         
         st.divider()
-        if st.button("Sair da Conta", use_container_width=True):
+        if st.button("🚪 Sair da Conta", use_container_width=True):
             AuthService.logout()
             st.rerun()
 
-    st.markdown(f"## Bem-vindo(a) ao seu painel, **{nome_usuario}**! 👋")
-    st.write("Selecione uma opção na barra lateral para começar a explorar seus indicadores ou registrar lançamentos.")
+    # Hero Banner SaaS para Usuário Autenticado
+    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); padding: 2.2rem 2.5rem; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4); margin-bottom: 2rem;">
+            <span style="background-color: rgba(16, 185, 129, 0.15); color: #34D399; font-size: 0.85rem; font-weight: 600; padding: 0.35rem 0.75rem; border-radius: 20px; border: 1px solid rgba(52, 211, 153, 0.3);">✨ Painel de Controle Principal</span>
+            <h1 style="font-size: 2.4rem; font-weight: 800; color: #F9FAFB; margin: 0.8rem 0 0.4rem 0;">Bem-vindo(a) de volta ao FinTrack, {nome_usuario}! 👋</h1>
+            <p style="font-size: 1.1rem; color: #94A3B8; margin: 0; font-weight: 400;">
+                Sistema Inteligente de Gestão Financeira Pessoal & Controle de Investimentos
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.info("📊 **Dashboard**: Visualize gráficos dinâmicos, saldo atual, despesas por categoria e evolução mensal.")
-    with col2:
-        st.success("💰 **Receitas e Despesas**: Cadastre, pesquise, filtre e exporte seus lançamentos em formato CSV.")
-    with col3:
-        st.warning("🏷️ **Categorias**: Organize suas entradas e saídas por categorias personalizadas.")
+    st.markdown("### 🗺️ O que você pode fazer no FinTrack hoje?")
+    
+    col_feat1, col_feat2 = st.columns(2)
+    with col_feat1:
+        st.info("📊 **1. Painel Geral (Dashboard)**\n\nVisualize indicadores de saúde financeira, saldo atual e gráficos de evolução de gastos.")
+        st.success("💰 **2. Fluxo de Caixa (Receitas & Despesas)**\n\nLance movimentações informando categoria, observações e forma de pagamento com exportação CSV.")
+        st.warning("💳 **3. Cartões & Parcelas**\n\nGerencie cartões de crédito (apelidos e 4 dígitos), datas de vencimento e compras parceladas.")
+
+    with col_feat2:
+        st.info("📈 **4. Carteira de Investimentos**\n\nMonitore o preço médio ponderado e a distribuição patrimonial por tipo de ativo.")
+        st.success("🏷️ **5. Categorias & Orçamentos**\n\nDefina orçamentos mensais para cada centro de custo.")
+        st.warning("👤 **6. Perfil & LGPD**\n\nExporte seus dados em CSV (Art. 18, V) ou solicite a exclusão anonimizada (Art. 16, I).")
