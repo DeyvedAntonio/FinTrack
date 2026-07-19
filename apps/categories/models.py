@@ -8,8 +8,19 @@ class Categoria(BaseModel):
         RECEITA = 'RECEITA', 'Receita'
         DESPESA = 'DESPESA', 'Despesa'
 
+    class PilarCategoria(models.TextChoices):
+        ESSENCIAL = 'ESSENCIAL', 'Essenciais (Necessidades)'
+        ESTILO_DE_VIDA = 'ESTILO_DE_VIDA', 'Estilo de Vida (Desejos)'
+        INVESTIMENTO = 'INVESTIMENTO', 'Investimentos (Futuro)'
+
     nome = models.CharField('Nome da Categoria', max_length=100)
     tipo = models.CharField('Tipo', max_length=10, choices=TipoCategoria.choices)
+    pilar = models.CharField(
+        'Pilar do Orçamento Consciente',
+        max_length=20,
+        choices=PilarCategoria.choices,
+        default=PilarCategoria.ESSENCIAL
+    )
     limite_mensal = models.DecimalField(
         'Limite Mensal (Orçamento)',
         max_digits=10,

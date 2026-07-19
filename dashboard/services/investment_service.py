@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from repositories.investment_repository import InvestmentRepository
 
 

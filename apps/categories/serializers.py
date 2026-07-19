@@ -4,10 +4,11 @@ from .models import Categoria
 
 class CategoriaSerializer(serializers.ModelSerializer):
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    pilar_display = serializers.CharField(source='get_pilar_display', read_only=True)
 
     class Meta:
         model = Categoria
-        fields = ('id', 'uuid', 'nome', 'tipo', 'tipo_display', 'limite_mensal', 'created_at')
+        fields = ('id', 'uuid', 'nome', 'tipo', 'tipo_display', 'pilar', 'pilar_display', 'limite_mensal', 'created_at')
         read_only_fields = ('id', 'uuid', 'created_at')
 
     def validate(self, attrs):

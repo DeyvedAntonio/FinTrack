@@ -16,10 +16,10 @@ class CategoryService:
         return {c["id"]: c["nome"] for c in cats}
 
     @staticmethod
-    def save_category(cat_id, nome, tipo, limite_mensal=0.0):
+    def save_category(cat_id, nome, tipo, limite_mensal=0.0, pilar='ESSENCIAL'):
         if cat_id:
-            return CategoryRepository.update(cat_id, nome, tipo, limite_mensal)
-        return CategoryRepository.create(nome, tipo, limite_mensal)
+            return CategoryRepository.update(cat_id, nome, tipo, limite_mensal, pilar)
+        return CategoryRepository.create(nome, tipo, limite_mensal, pilar)
 
     @staticmethod
     def delete_category(cat_id):

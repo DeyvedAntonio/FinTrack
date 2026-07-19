@@ -33,7 +33,7 @@ if "show_receita_form" not in st.session_state:
 
 # Botão para Nova Receita
 with col_header:
-    if st.button("➕ Nova Receita", help="Nova Receita"):
+    if st.button("➕ Nova Receita", key="nova_receita", help="Nova Receita"):
         st.session_state["edit_receita"] = None
         st.session_state["show_receita_form"] = True
 
