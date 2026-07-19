@@ -1,6 +1,8 @@
 import streamlit as st
-# pyrefly: ignore [missing-import]
-from utils import apply_theme, check_authentication, api_request, format_currency
+from core.theme import apply_theme, format_currency
+from core.session import check_authentication
+from services.card_service import CardService
+from services.category_service import CategoryService
 
 st.set_page_config(page_title="Cartões & Parcelamentos | FinTrack", page_icon="💳", layout="wide")
 apply_theme()
@@ -12,14 +14,9 @@ moeda = user.get("moeda", "BRL")
 st.title("💳 Cartões de Crédito e Parcelamentos")
 st.caption("Cadastre múltiplos cartões de crédito com apelidos, limite e datas de vencimento, e gerencie compras parceladas.")
 
-# Obter Categorias de Despesa
-success_cat, data_cat = api_request("GET", "categories/")
-categorias_list = [c for c in (data_cat if success_cat else []) if c["tipo"] == "DESPESA"]
-cat_options = {c["id"]: c["nome"] for c in categorias_list}
-
-# Obter Cartões do Usuário
-succ_cartoes, cartoes_list = api_request("GET", "finance/cartoes/")
-cartoes = cartoes_list if succ_cartoes and isinstance(cartoes_list, list) else []
+# Obter Categorias e Cartões via Services
+cat_options = CategoryService.get_category_dict(tipo="DESPESA")
+cartoes = CardService.get_cartoes()
 cartao_options = {c["id"]: c["nome_exibicao"] for c in cartoes}
 
 tab_cartoes, tab_parcelas = st.tabs(["💳 Meus Cartões de Crédito", "📦 Compras Parceladas"])
@@ -56,7 +53,7 @@ with tab_cartoes:
                         "reducao_mensal_desejada": reducao_nc
                     }
                     with st.spinner("Cadastrando cartão..."):
-                        succ_c, res_c = api_request("POST", "finance/cartoes/", payload_nc)
+                        succ_c, _ = CardService.save_cartao(None, payload_nc)
                         if succ_c:
                             st.success("Cartão cadastrado com sucesso!")
                             st.rerun()
@@ -65,7 +62,6 @@ with tab_cartoes:
 
     st.divider()
 
-    # Listagem dos Cartões do Usuário
     if cartoes:
         for c in cartoes:
             with st.container():
@@ -81,7 +77,7 @@ with tab_cartoes:
                         st.caption(f"Meta de redução passiva: {format_currency(c['reducao_mensal_desejada'], moeda)}/mês")
                 with col_act:
                     if st.button("🗑️ Excluir Cartão", key=f"del_card_{c['id']}"):
-                        succ_del_c, _ = api_request("DELETE", f"finance/cartoes/{c['id']}/")
+                        succ_del_c, _ = CardService.delete_cartao(c["id"])
                         if succ_del_c:
                             st.success("Cartão removido.")
                             st.rerun()
@@ -125,7 +121,7 @@ with tab_parcelas:
                         "cartao": cartao_id_parc
                     }
                     with st.spinner("Cadastrando parcelamento..."):
-                        succ_p, res_p = api_request("POST", "finance/parcelamentos/", payload_parc)
+                        succ_p, res_p = CardService.save_parcelamento(payload_parc)
                         if succ_p:
                             st.success("Parcelamento cadastrado com sucesso!")
                             st.rerun()
@@ -134,10 +130,9 @@ with tab_parcelas:
 
     st.divider()
 
-    # Listagem de Parcelamentos
-    succ_list_p, list_parcelamentos = api_request("GET", "finance/parcelamentos/")
+    list_parcelamentos = CardService.get_parcelamentos()
     
-    if succ_list_p and list_parcelamentos:
+    if list_parcelamentos:
         for p in list_parcelamentos:
             col_p1, col_p2, col_p3 = st.columns([4, 3, 2])
             with col_p1:
@@ -150,7 +145,7 @@ with tab_parcelas:
                 st.caption(f"Total: {format_currency(p['valor_total'], moeda)} | 1ª Parcela: {p['data_primeira_parcela']}")
             with col_p3:
                 if st.button("🗑️ Excluir", key=f"del_parc_{p['id']}"):
-                    succ_del_p, _ = api_request("DELETE", f"finance/parcelamentos/{p['id']}/")
+                    succ_del_p, _ = CardService.delete_parcelamento(p["id"])
                     if succ_del_p:
                         st.success("Parcelamento excluído.")
                         st.rerun()

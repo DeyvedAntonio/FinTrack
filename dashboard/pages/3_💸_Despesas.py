@@ -1,8 +1,11 @@
 import datetime
 import pandas as pd
 import streamlit as st
-# pyrefly: ignore [missing-import]
-from utils import apply_theme, check_authentication, api_request, format_currency
+from core.theme import apply_theme, format_currency
+from core.session import check_authentication
+from services.finance_service import FinanceService
+from services.category_service import CategoryService
+from services.card_service import CardService
 
 st.set_page_config(page_title="Despesas | FinTrack", page_icon="💸", layout="wide")
 apply_theme()
@@ -14,15 +17,9 @@ moeda = user.get("moeda", "BRL")
 st.title("💸 Gerenciamento de Despesas")
 st.caption("Cadastre e controle todos os seus gastos e custos.")
 
-# Obter Categorias do Tipo DESPESA
-success_cat, data_cat = api_request("GET", "categories/", params={"tipo": "DESPESA"})
-categorias_despesa = data_cat if success_cat else []
-cat_dict = {c["id"]: c["nome"] for c in categorias_despesa}
-
-# Obter Cartões do Usuário
-succ_cartoes, data_cartoes = api_request("GET", "finance/cartoes/")
-cartoes_list = data_cartoes if succ_cartoes and isinstance(data_cartoes, list) else []
-cartao_dict = {c["id"]: c["nome_exibicao"] for c in cartoes_list}
+# Obter Categorias e Cartões via Services
+cat_dict = CategoryService.get_category_dict(tipo="DESPESA")
+cartao_dict = CardService.get_cartao_dict()
 
 # Estados para Formulário (Cadastro/Edição)
 if "edit_despesa" not in st.session_state:
@@ -53,13 +50,11 @@ if st.session_state["show_despesa_form"]:
                 pass
         data_desp = st.date_input("Data", value=data_val)
 
-        # Seleção da Categoria
         cat_options = list(cat_dict.values())
         curr_cat_name = desp_obj.get("categoria_nome")
         cat_index = cat_options.index(curr_cat_name) if curr_cat_name in cat_options else 0
         categoria_selected = st.selectbox("Categoria", options=cat_options if cat_options else ["Sem Categorias de Despesa"], index=cat_index if cat_options else 0)
 
-        # Forma e Cartão de Pagamento
         forma_options = {
             "CREDITO_1X": "Crédito À Vista",
             "DEBITO": "Débito",
@@ -73,9 +68,8 @@ if st.session_state["show_despesa_form"]:
         
         forma_pagamento_key = st.selectbox("Forma de Pagamento", options=fp_keys, format_func=lambda x: forma_options.get(x, x), index=fp_idx)
 
-        # Seleção do Cartão de Crédito (Opcional)
         cartao_id_selected = None
-        if cartoes_list:
+        if cartao_dict:
             c_keys = [None] + list(cartao_dict.keys())
             curr_c_id = desp_obj.get("cartao")
             c_idx = c_keys.index(curr_c_id) if curr_c_id in c_keys else 0
@@ -106,15 +100,9 @@ if st.session_state["show_despesa_form"]:
                     "cartao": cartao_id_selected,
                     "observacoes": observacoes
                 }
-                if is_editing:
-                    success, res = api_request("PUT", f"finance/movimentacoes/{desp_obj['id']}/", payload)
-                    msg_sucesso = "Despesa atualizada."
-                else:
-                    success, res = api_request("POST", "finance/movimentacoes/", payload)
-                    msg_sucesso = "Despesa salva."
-
+                success, res = FinanceService.save_movimentacao(desp_obj.get("id"), payload)
                 if success:
-                    st.success(msg_sucesso)
+                    st.success("Despesa salva com sucesso.")
                     st.session_state["show_despesa_form"] = False
                     st.session_state["edit_despesa"] = None
                     st.rerun()
@@ -157,10 +145,9 @@ if f_mes != "Todos":
 if f_ano:
     params["ano"] = f_ano
 
-# Listagem de Despesas
-success_list, data_despesas = api_request("GET", "finance/movimentacoes/", params=params)
+data_despesas = FinanceService.get_movimentacoes(params=params)
 
-if success_list and data_despesas:
+if data_despesas:
     st.subheader(f"Total de Registros ({len(data_despesas)})")
     
     for item in data_despesas:
@@ -180,7 +167,7 @@ if success_list and data_despesas:
                     st.rerun()
             with col_act2:
                 if st.button("🗑️ Excluir", key=f"del_desp_{item['id']}"):
-                    succ_del, _ = api_request("DELETE", f"finance/movimentacoes/{item['id']}/")
+                    succ_del, _ = FinanceService.delete_movimentacao(item["id"])
                     if succ_del:
                         st.success("Despesa excluída.")
                         st.rerun()

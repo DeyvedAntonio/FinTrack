@@ -1,6 +1,7 @@
 import streamlit as st
-# pyrefly: ignore [missing-import]
-from utils import apply_theme, check_authentication, api_request
+from core.theme import apply_theme, format_currency
+from core.session import check_authentication
+from services.category_service import CategoryService
 
 st.set_page_config(page_title="Categorias | FinTrack", page_icon="🏷️", layout="wide")
 apply_theme()
@@ -29,9 +30,7 @@ if st.session_state["show_cat_form"]:
     with st.form("form_categoria"):
         nome_cat = st.text_input("Nome da Categoria", value=cat_obj.get("nome", ""), placeholder="Ex: Investimentos, Lazer, Educação")
         
-        tipo_index = 0
-        if cat_obj.get("tipo") == "DESPESA":
-            tipo_index = 1
+        tipo_index = 1 if cat_obj.get("tipo") == "DESPESA" else 0
         tipo_cat = st.radio("Tipo da Categoria", options=["RECEITA", "DESPESA"], format_func=lambda x: "Receita" if x == "RECEITA" else "Despesa", index=tipo_index)
         
         curr_limite = float(cat_obj.get("limite_mensal", 0.0))
@@ -47,16 +46,9 @@ if st.session_state["show_cat_form"]:
             if not nome_cat.strip():
                 st.error("O nome da categoria é obrigatório.")
             else:
-                payload = {"nome": nome_cat.strip(), "tipo": tipo_cat, "limite_mensal": limite_cat}
-                if is_editing:
-                    success, res = api_request("PUT", f"categories/{cat_obj['id']}/", payload)
-                    msg_sucesso = "Categoria atualizada."
-                else:
-                    success, res = api_request("POST", "categories/", payload)
-                    msg_sucesso = "Categoria criada."
-
+                success, res = CategoryService.save_category(cat_obj.get("id"), nome_cat.strip(), tipo_cat, limite_cat)
                 if success:
-                    st.success(msg_sucesso)
+                    st.success("Categoria salva com sucesso.")
                     st.session_state["show_cat_form"] = False
                     st.session_state["edit_cat"] = None
                     st.rerun()
@@ -70,10 +62,10 @@ if st.session_state["show_cat_form"]:
 
 st.divider()
 
-# Listagem de Categorias
-success, categorias = api_request("GET", "categories/")
+# Listagem de Categorias via CategoryService
+categorias = CategoryService.get_categories()
 
-if success and categorias:
+if categorias:
     col_rec, col_desp = st.columns(2)
 
     with col_rec:
@@ -85,7 +77,7 @@ if success and categorias:
                 with c1:
                     st.write(f"🏷️ **{item['nome']}**")
                     if float(item.get("limite_mensal", 0)) > 0:
-                        st.caption(f"Meta/Limite: R$ {float(item['limite_mensal']):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                        st.caption(f"Meta/Limite: {format_currency(item['limite_mensal'])}")
                 with c2:
                     if st.button("✏️ Editar", key=f"edit_c_{item['id']}"):
                         st.session_state["edit_cat"] = item
@@ -93,7 +85,7 @@ if success and categorias:
                         st.rerun()
                 with c3:
                     if st.button("🗑️ Excluir", key=f"del_c_{item['id']}"):
-                        succ_del, res_del = api_request("DELETE", f"categories/{item['id']}/")
+                        succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")
                             st.rerun()
@@ -112,7 +104,7 @@ if success and categorias:
                 with c1:
                     st.write(f"🏷️ **{item['nome']}**")
                     if float(item.get("limite_mensal", 0)) > 0:
-                        st.caption(f"Orçamento Limite: R$ {float(item['limite_mensal']):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                        st.caption(f"Orçamento Limite: {format_currency(item['limite_mensal'])}")
                 with c2:
                     if st.button("✏️ Editar", key=f"edit_c_{item['id']}"):
                         st.session_state["edit_cat"] = item
@@ -120,7 +112,7 @@ if success and categorias:
                         st.rerun()
                 with c3:
                     if st.button("🗑️ Excluir", key=f"del_c_{item['id']}"):
-                        succ_del, res_del = api_request("DELETE", f"categories/{item['id']}/")
+                        succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")
                             st.rerun()

@@ -1,6 +1,8 @@
 import streamlit as st
-# pyrefly: ignore [missing-import]
-from utils import apply_theme, check_authentication, api_request
+from core.theme import apply_theme
+from core.session import check_authentication
+from services.auth_service import AuthService
+from components.alerts import render_lgpd_notice, render_portability_notice
 
 st.set_page_config(page_title="Meu Perfil | FinTrack", page_icon="👤", layout="wide")
 apply_theme()
@@ -60,9 +62,8 @@ with st.form("form_perfil"):
                 files = {"foto_perfil": (foto_upload.name, foto_upload.getvalue(), foto_upload.type)}
 
             with st.spinner("Atualizando perfil..."):
-                success, data = api_request("PATCH", "auth/profile/", payload=payload, files=files)
+                success, data = AuthService.update_profile(payload=payload, files=files)
                 if success:
-                    st.session_state["user"] = data["user"]
                     st.success("Perfil atualizado.")
                     st.rerun()
                 else:
@@ -85,15 +86,9 @@ with st.form("form_alterar_senha"):
         elif new_password != confirm_new_password:
             st.error("A nova senha e a confirmação não coincidem.")
         else:
-            payload_pwd = {
-                "old_password": old_password,
-                "new_password": new_password,
-                "confirm_new_password": confirm_new_password
-            }
             with st.spinner("Alterando senha..."):
-                success_p, res_p = api_request("POST", "auth/change-password/", payload_pwd)
+                success_p, res_p = AuthService.change_password(old_password, new_password, confirm_new_password)
                 if success_p:
-                    st.session_state["token"] = res_p["token"]
                     st.success("Senha alterada.")
                 else:
                     st.error(res_p.get("old_password", [res_p.get("detail", "Erro ao alterar senha.")])[0] if isinstance(res_p.get("old_password"), list) else res_p.get("detail", "Erro ao alterar senha."))
@@ -102,14 +97,11 @@ st.divider()
 
 # 4. Exportação de Dados e Portabilidade (LGPD Art. 18, V)
 st.subheader("📥 Exportação de Dados e Portabilidade (LGPD)")
-st.info("""
-**Direito à Portabilidade dos Dados (Art. 18, V da LGPD):**  
-Você pode realizar o download completo de todos os seus dados cadastrados no FinTrack (informações de perfil, categorias e o histórico completo de movimentações financeiras) em um arquivo no formato CSV.
-""")
+render_portability_notice()
 
 if st.button("📦 Gerar Arquivo de Exportação CSV", use_container_width=True):
     with st.spinner("Gerando arquivo consolidado de dados..."):
-        success_exp, csv_data = api_request("GET", "auth/export-csv/")
+        success_exp, csv_data = AuthService.export_user_data_csv()
         if success_exp:
             st.download_button(
                 label="⬇️ Clique aqui para baixar meus_dados_fintrack.csv",
@@ -125,23 +117,15 @@ st.divider()
 
 # 5. Botão de Encerramento de Sessão (Logout)
 if st.button("🚪 Sair da Conta", use_container_width=True):
-    api_request("POST", "auth/logout/")
-    st.session_state["token"] = None
-    st.session_state["user"] = None
+    AuthService.logout()
     st.success("Sessão encerrada.")
     st.rerun()
 
 st.divider()
 
-# 5. Zona de Atenção - LGPD e Exclusão de Perfil
+# 6. Zona de Atenção - LGPD e Exclusão de Perfil
 st.subheader("⚠️ Zona de Atenção (LGPD & Privacidade)")
-
-st.warning("""
-**Direito de Eliminação de Dados e Retenção Legal (Art. 16, I da LGPD - Lei nº 13.709/2018):**  
-Ao solicitar a exclusão da sua conta, seus dados pessoais identificáveis (nome, e-mail e foto) serão **permanentemente anonimizados** e seu acesso à plataforma será revogado imediatamente. 
-
-Em estrito cumprimento à legislação fiscal e cível brasileira, seus registros de movimentações financeiras históricas serão mantidos de forma **anonimizada pelo prazo legal de 5 anos** para auditoria e prestação de contas, sem qualquer vinculação aos seus dados pessoais.
-""")
+render_lgpd_notice()
 
 with st.expander("🚨 Solicitar Exclusão da Conta e Anonimização de Dados", expanded=False):
     st.write("Esta ação é **irreversível**. Para prosseguir, confirme sua senha atual abaixo:")
@@ -159,13 +143,10 @@ with st.expander("🚨 Solicitar Exclusão da Conta e Anonimização de Dados", 
                 st.error("Marque a caixa de seleção confirmando que está ciente da irreversibilidade da ação.")
             else:
                 with st.spinner("Processando anonimização e exclusão da conta..."):
-                    success_d, res_d = api_request("POST", "auth/delete-account/", {"password": confirm_password})
+                    success_d, res_d = AuthService.delete_account(confirm_password)
                     if success_d:
-                        st.session_state["token"] = None
-                        st.session_state["user"] = None
                         st.success("Sua conta foi inativada e seus dados pessoais foram permanentemente anonimizados conforme a LGPD.")
                         st.rerun()
                     else:
                         err_msg = res_d.get("password", [res_d.get("detail", "Erro ao excluir conta.")])[0] if isinstance(res_d.get("password"), list) else res_d.get("detail", "Erro ao excluir conta.")
                         st.error(err_msg)
-

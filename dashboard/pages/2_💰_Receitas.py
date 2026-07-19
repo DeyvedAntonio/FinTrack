@@ -1,8 +1,10 @@
 import datetime
 import pandas as pd
 import streamlit as st
-# pyrefly: ignore [missing-import]
-from utils import apply_theme, check_authentication, api_request, format_currency
+from core.theme import apply_theme, format_currency
+from core.session import check_authentication
+from services.finance_service import FinanceService
+from services.category_service import CategoryService
 
 st.set_page_config(page_title="Receitas | FinTrack", page_icon="💰", layout="wide")
 apply_theme()
@@ -15,9 +17,7 @@ st.title("💰 Gerenciamento de Receitas")
 st.caption("Cadastre e acompanhe todas as suas entradas financeiras.")
 
 # Obter Categorias do Tipo RECEITA
-success_cat, data_cat = api_request("GET", "categories/", params={"tipo": "RECEITA"})
-categorias_receita = data_cat if success_cat else []
-cat_dict = {c["id"]: c["nome"] for c in categorias_receita}
+cat_dict = CategoryService.get_category_dict(tipo="RECEITA")
 
 # Estados para Formulário (Cadastro/Edição)
 if "edit_receita" not in st.session_state:
@@ -48,7 +48,6 @@ if st.session_state["show_receita_form"]:
                 pass
         data_rec = st.date_input("Data", value=data_val)
 
-        # Seleção da Categoria
         cat_options = list(cat_dict.values())
         curr_cat_name = rec_obj.get("categoria_nome")
         cat_index = cat_options.index(curr_cat_name) if curr_cat_name in cat_options else 0
@@ -77,15 +76,9 @@ if st.session_state["show_receita_form"]:
                     "categoria": cat_id[0],
                     "observacoes": observacoes
                 }
-                if is_editing:
-                    success, res = api_request("PUT", f"finance/movimentacoes/{rec_obj['id']}/", payload)
-                    msg_sucesso = "Receita atualizada."
-                else:
-                    success, res = api_request("POST", "finance/movimentacoes/", payload)
-                    msg_sucesso = "Receita salva."
-
+                success, res = FinanceService.save_movimentacao(rec_obj.get("id"), payload)
                 if success:
-                    st.success(msg_sucesso)
+                    st.success("Receita salva com sucesso.")
                     st.session_state["show_receita_form"] = False
                     st.session_state["edit_receita"] = None
                     st.rerun()
@@ -122,17 +115,16 @@ if f_mes != "Todos":
 if f_ano:
     params["ano"] = f_ano
 
-# Listagem de Receitas
-success_list, data_receitas = api_request("GET", "finance/movimentacoes/", params=params)
+data_receitas = FinanceService.get_movimentacoes(params=params)
 
-if success_list and data_receitas:
+if data_receitas:
     st.subheader(f"Total de Registros ({len(data_receitas)})")
     
     for item in data_receitas:
         c_info, c_val, c_actions = st.columns([4, 2, 2])
         with c_info:
             st.markdown(f"**{item['descricao']}**")
-            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} {f'| 📝 {item['observacoes']}' if item.get('observacoes') else ''}")
+            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} {f'| 📝 {item[\"observacoes\"]}' if item.get('observacoes') else ''}")
         with c_val:
             st.markdown(f"<span style='color: #10B981; font-weight: bold; font-size: 1.2rem;'>+ {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)
         with c_actions:
@@ -144,7 +136,7 @@ if success_list and data_receitas:
                     st.rerun()
             with col_act2:
                 if st.button("🗑️ Excluir", key=f"del_rec_{item['id']}"):
-                    succ_del, _ = api_request("DELETE", f"finance/movimentacoes/{item['id']}/")
+                    succ_del, _ = FinanceService.delete_movimentacao(item["id"])
                     if succ_del:
                         st.success("Receita excluída.")
                         st.rerun()

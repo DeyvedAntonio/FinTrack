@@ -1,8 +1,9 @@
 import streamlit as st
-# pyrefly: ignore [missing-import]
-from utils import apply_theme, api_request
+from core.theme import apply_theme
+from core.session import init_session
+from services.auth_service import AuthService
+from repositories.auth_repository import AuthRepository
 
-# Configuração da Página
 st.set_page_config(
     page_title="FinTrack - Gestão Financeira Pessoal",
     page_icon="💳",
@@ -10,18 +11,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Aplicar Tema Visual e Paleta de Cores do FinTrack
 apply_theme()
+init_session()
 
-# Inicialização de estados da sessão
-if "token" not in st.session_state:
-    st.session_state["token"] = None
-if "user" not in st.session_state:
-    st.session_state["user"] = None
-if "auth_mode" not in st.session_state:
-    st.session_state["auth_mode"] = "login"  # 'login', 'register', 'reset'
-
-# Cabeçalho do App com Logo e Tipografia do PRD
+# Cabeçalho da Aplicação
 st.markdown("""
     <div style="text-align: center; padding: 1.5rem 0 2rem 0;">
         <h1 style="font-size: 3rem; font-weight: 900; margin: 0; color: #1F2937; letter-spacing: -1px;">
@@ -33,12 +26,11 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Se não estiver autenticado, exibe o painel de Autenticação (Login / Cadastro)
+# Se não estiver autenticado
 if not st.session_state["token"]:
-    col_left, col_center, col_right = st.columns([1, 2, 1])
+    _, col_center, _ = st.columns([1, 2, 1])
     
     with col_center:
-        # Modo: LOGIN
         if st.session_state["auth_mode"] == "login":
             st.subheader("Entrar")
             st.caption("Acesse sua conta para gerenciar suas finanças.")
@@ -53,10 +45,8 @@ if not st.session_state["token"]:
                         st.error("Por favor, preencha todos os campos.")
                     else:
                         with st.spinner("Entrando..."):
-                            success, data = api_request("POST", "auth/login/", {"email": email, "password": password})
+                            success, data = AuthService.login(email, password)
                             if success:
-                                st.session_state["token"] = data["token"]
-                                st.session_state["user"] = data["user"]
                                 st.success("Login realizado com sucesso!")
                                 st.rerun()
                             else:
@@ -73,7 +63,6 @@ if not st.session_state["token"]:
                     st.session_state["auth_mode"] = "reset"
                     st.rerun()
 
-        # Modo: CADASTRO
         elif st.session_state["auth_mode"] == "register":
             st.subheader("Criar Conta")
             st.caption("Cadastre-se gratuitamente no FinTrack.")
@@ -92,16 +81,8 @@ if not st.session_state["token"]:
                         st.error("Senhas diferentes. Verifique a senha digitada.")
                     else:
                         with st.spinner("Cadastrando sua conta..."):
-                            payload = {
-                                "nome": nome,
-                                "email": email,
-                                "password": password,
-                                "confirm_password": confirm_password
-                            }
-                            success, data = api_request("POST", "auth/register/", payload)
+                            success, data = AuthService.register(nome, email, password, confirm_password)
                             if success:
-                                st.session_state["token"] = data["token"]
-                                st.session_state["user"] = data["user"]
                                 st.success("Cadastro realizado com sucesso!")
                                 st.rerun()
                             else:
@@ -112,7 +93,6 @@ if not st.session_state["token"]:
                 st.session_state["auth_mode"] = "login"
                 st.rerun()
 
-        # Modo: RECUPERAÇÃO DE SENHA
         elif st.session_state["auth_mode"] == "reset":
             st.subheader("Recuperar Senha")
             st.caption("Informe seu e-mail para receber as instruções.")
@@ -126,7 +106,7 @@ if not st.session_state["token"]:
                         st.error("Informe seu e-mail.")
                     else:
                         with st.spinner("Enviando solicitação..."):
-                            success, data = api_request("POST", "auth/password-reset/", {"email": email})
+                            success, _ = AuthRepository.request_password_reset(email)
                             if success:
                                 st.info("Link enviado. Se o e-mail estiver cadastrado, você receberá o link em breve.")
                             else:
@@ -136,13 +116,11 @@ if not st.session_state["token"]:
                 st.session_state["auth_mode"] = "login"
                 st.rerun()
 
-# Se estiver AUTENTICADO
 else:
     user = st.session_state["user"]
     nome_usuario = user.get("nome") or user.get("email")
     moeda = user.get("moeda", "BRL")
 
-    # Renderizar Menu Lateral Persistente
     with st.sidebar:
         st.markdown(f"### Olá, **{nome_usuario}**!")
         st.caption(f"Moeda Padrão: **{moeda}**")
@@ -151,12 +129,9 @@ else:
         
         st.divider()
         if st.button("Sair da Conta", use_container_width=True):
-            api_request("POST", "auth/logout/")
-            st.session_state["token"] = None
-            st.session_state["user"] = None
+            AuthService.logout()
             st.rerun()
 
-    # Conteúdo Principal de Boas-Vindas
     st.markdown(f"## Bem-vindo(a) ao seu painel, **{nome_usuario}**! 👋")
     st.write("Selecione uma opção na barra lateral para começar a explorar seus indicadores ou registrar lançamentos.")
 
