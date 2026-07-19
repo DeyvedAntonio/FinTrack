@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+# pyrefly: ignore [missing-import]
 from core.theme import apply_theme
 from core.session import check_authentication
 from services.finance_service import FinanceService
@@ -57,7 +58,7 @@ else:
     st.divider()
 
     # 5. Gráficos Analíticos
-    render_analytics_charts(movimentacoes)
+    render_analytics_charts(movimentacoes, moeda=moeda)
 
     st.divider()
 
@@ -84,7 +85,7 @@ else:
 
     with l2:
         st.subheader("🕒 Últimos Lançamentos")
-        df_recent = df.sort_values(by="created_at", ascending=False).head(5)
+        df_recent = df.sort_values(by="data", ascending=False).head(5)
         st.dataframe(
             df_recent[["tipo_display", "descricao", "categoria_nome", "valor", "data"]].rename(columns={
                 "tipo_display": "Tipo",
