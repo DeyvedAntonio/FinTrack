@@ -19,6 +19,11 @@ success_cat, data_cat = api_request("GET", "categories/", params={"tipo": "DESPE
 categorias_despesa = data_cat if success_cat else []
 cat_dict = {c["id"]: c["nome"] for c in categorias_despesa}
 
+# Obter Cartões do Usuário
+succ_cartoes, data_cartoes = api_request("GET", "finance/cartoes/")
+cartoes_list = data_cartoes if succ_cartoes and isinstance(data_cartoes, list) else []
+cartao_dict = {c["id"]: c["nome_exibicao"] for c in cartoes_list}
+
 # Estados para Formulário (Cadastro/Edição)
 if "edit_despesa" not in st.session_state:
     st.session_state["edit_despesa"] = None
@@ -54,7 +59,28 @@ if st.session_state["show_despesa_form"]:
         cat_index = cat_options.index(curr_cat_name) if curr_cat_name in cat_options else 0
         categoria_selected = st.selectbox("Categoria", options=cat_options if cat_options else ["Sem Categorias de Despesa"], index=cat_index if cat_options else 0)
 
-        forma_pagamento = st.selectbox("Forma de Pagamento", options=["Pix", "Cartão de Crédito", "Cartão de Débito", "Dinheiro", "Boleto", "Outro"], index=0)
+        # Forma e Cartão de Pagamento
+        forma_options = {
+            "CREDITO_1X": "Crédito À Vista",
+            "DEBITO": "Débito",
+            "PIX_TRANSFERENCIA": "PIX / Transferência",
+            "DINHEIRO": "Dinheiro",
+            "BOLETO": "Boleto"
+        }
+        curr_fp = desp_obj.get("forma_pagamento", "DEBITO")
+        fp_keys = list(forma_options.keys())
+        fp_idx = fp_keys.index(curr_fp) if curr_fp in fp_keys else 1
+        
+        forma_pagamento_key = st.selectbox("Forma de Pagamento", options=fp_keys, format_func=lambda x: forma_options.get(x, x), index=fp_idx)
+
+        # Seleção do Cartão de Crédito (Opcional)
+        cartao_id_selected = None
+        if cartoes_list:
+            c_keys = [None] + list(cartao_dict.keys())
+            curr_c_id = desp_obj.get("cartao")
+            c_idx = c_keys.index(curr_c_id) if curr_c_id in c_keys else 0
+            cartao_id_selected = st.selectbox("Cartão de Crédito (Opcional)", options=c_keys, format_func=lambda x: "Nenhum" if x is None else cartao_dict.get(x, ""), index=c_idx)
+
         observacoes = st.text_area("Observações", value=desp_obj.get("observacoes", "") or "")
 
         col_save, col_cancel = st.columns(2)
@@ -76,7 +102,8 @@ if st.session_state["show_despesa_form"]:
                     "tipo": "DESPESA",
                     "data": str(data_desp),
                     "categoria": cat_id[0],
-                    "forma_pagamento": forma_pagamento,
+                    "forma_pagamento": forma_pagamento_key,
+                    "cartao": cartao_id_selected,
                     "observacoes": observacoes
                 }
                 if is_editing:
@@ -102,11 +129,13 @@ if st.session_state["show_despesa_form"]:
 st.divider()
 
 # Barra de Pesquisa e Filtros
-col_search, col_f_cat, col_f_mes, col_f_ano = st.columns([2, 1, 1, 1])
+col_search, col_f_cat, col_f_cart, col_f_mes, col_f_ano = st.columns([2, 1, 1, 1, 1])
 with col_search:
     search_q = st.text_input("🔍 Buscar por descrição", placeholder="Ex: Mercado")
 with col_f_cat:
     f_cat = st.selectbox("Categoria", options=["Todas"] + list(cat_dict.values()))
+with col_f_cart:
+    f_cartao_name = st.selectbox("Cartão", options=["Todos"] + list(cartao_dict.values()))
 with col_f_mes:
     f_mes = st.selectbox("Mês", options=["Todos", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
 with col_f_ano:
@@ -119,6 +148,10 @@ if f_cat != "Todas":
     cat_id_filt = [k for k, v in cat_dict.items() if v == f_cat]
     if cat_id_filt:
         params["categoria"] = cat_id_filt[0]
+if f_cartao_name != "Todos":
+    c_id_filt = [k for k, v in cartao_dict.items() if v == f_cartao_name]
+    if c_id_filt:
+        params["cartao"] = c_id_filt[0]
 if f_mes != "Todos":
     params["mes"] = f_mes
 if f_ano:
@@ -133,8 +166,9 @@ if success_list and data_despesas:
     for item in data_despesas:
         c_info, c_val, c_actions = st.columns([4, 2, 2])
         with c_info:
+            cartao_str = f" | 💳 {item['cartao_nome']}" if item.get('cartao_nome') else ""
             st.markdown(f"**{item['descricao']}**")
-            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} | 💳 {item.get('forma_pagamento') or 'Não informada'} {f'| 📝 {item['observacoes']}' if item.get('observacoes') else ''}")
+            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} | 💵 {item.get('forma_pagamento_display') or 'Não informada'}{cartao_str} {f'| 📝 {item[\"observacoes\"]}' if item.get('observacoes') else ''}")
         with c_val:
             st.markdown(f"<span style='color: #EF4444; font-weight: bold; font-size: 1.2rem;'>- {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)
         with c_actions:

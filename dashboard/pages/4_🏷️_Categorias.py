@@ -33,6 +33,9 @@ if st.session_state["show_cat_form"]:
         if cat_obj.get("tipo") == "DESPESA":
             tipo_index = 1
         tipo_cat = st.radio("Tipo da Categoria", options=["RECEITA", "DESPESA"], format_func=lambda x: "Receita" if x == "RECEITA" else "Despesa", index=tipo_index)
+        
+        curr_limite = float(cat_obj.get("limite_mensal", 0.0))
+        limite_cat = st.number_input("Limite Mensal de Orçamento (R$)", min_value=0.0, value=curr_limite, step=50.0, help="Defina um teto mensal de orçamento para acompanhar no Dashboard.")
 
         col_save, col_cancel = st.columns(2)
         with col_save:
@@ -44,7 +47,7 @@ if st.session_state["show_cat_form"]:
             if not nome_cat.strip():
                 st.error("O nome da categoria é obrigatório.")
             else:
-                payload = {"nome": nome_cat.strip(), "tipo": tipo_cat}
+                payload = {"nome": nome_cat.strip(), "tipo": tipo_cat, "limite_mensal": limite_cat}
                 if is_editing:
                     success, res = api_request("PUT", f"categories/{cat_obj['id']}/", payload)
                     msg_sucesso = "Categoria atualizada."
@@ -81,6 +84,8 @@ if success and categorias:
                 c1, c2, c3 = st.columns([4, 2, 2])
                 with c1:
                     st.write(f"🏷️ **{item['nome']}**")
+                    if float(item.get("limite_mensal", 0)) > 0:
+                        st.caption(f"Meta/Limite: R$ {float(item['limite_mensal']):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                 with c2:
                     if st.button("✏️ Editar", key=f"edit_c_{item['id']}"):
                         st.session_state["edit_cat"] = item
@@ -93,8 +98,7 @@ if success and categorias:
                             st.success("Categoria excluída.")
                             st.rerun()
                         else:
-                            # Rejeição por Regra de Negócio (vinculada a movimentações)
-                            st.error(res_del.get("detail", "Categoria vinculada a movimentações."))
+                            st.error(res_del.get("detail", "Erro ao excluir categoria."))
                 st.divider()
         else:
             st.caption("Nenhuma categoria de receita cadastrada.")
@@ -107,6 +111,8 @@ if success and categorias:
                 c1, c2, c3 = st.columns([4, 2, 2])
                 with c1:
                     st.write(f"🏷️ **{item['nome']}**")
+                    if float(item.get("limite_mensal", 0)) > 0:
+                        st.caption(f"Orçamento Limite: R$ {float(item['limite_mensal']):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                 with c2:
                     if st.button("✏️ Editar", key=f"edit_c_{item['id']}"):
                         st.session_state["edit_cat"] = item
@@ -119,8 +125,7 @@ if success and categorias:
                             st.success("Categoria excluída.")
                             st.rerun()
                         else:
-                            # Rejeição por Regra de Negócio (vinculada a movimentações)
-                            st.error(res_del.get("detail", "Categoria vinculada a movimentações."))
+                            st.error(res_del.get("detail", "Erro ao excluir categoria."))
                 st.divider()
         else:
             st.caption("Nenhuma categoria de despesa cadastrada.")

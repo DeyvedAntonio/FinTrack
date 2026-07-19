@@ -56,11 +56,13 @@ class CategoriaAPITestCase(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
         payload = {
             'nome': 'Freelance',
-            'tipo': Categoria.TipoCategoria.RECEITA
+            'tipo': Categoria.TipoCategoria.RECEITA,
+            'limite_mensal': '1500.00'
         }
         response = self.client.post(self.list_url, payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['nome'], 'Freelance')
+        self.assertEqual(float(response.data['limite_mensal']), 1500.0)
         self.assertEqual(Categoria.objects.filter(usuario=self.user1, nome='Freelance').count(), 1)
 
     def test_create_duplicate_categoria(self):

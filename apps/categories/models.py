@@ -10,6 +10,12 @@ class Categoria(BaseModel):
 
     nome = models.CharField('Nome da Categoria', max_length=100)
     tipo = models.CharField('Tipo', max_length=10, choices=TipoCategoria.choices)
+    limite_mensal = models.DecimalField(
+        'Limite Mensal (Orçamento)',
+        max_digits=10,
+        decimal_places=2,
+        default=0.00
+    )
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

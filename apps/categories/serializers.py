@@ -7,7 +7,7 @@ class CategoriaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Categoria
-        fields = ('id', 'uuid', 'nome', 'tipo', 'tipo_display', 'created_at')
+        fields = ('id', 'uuid', 'nome', 'tipo', 'tipo_display', 'limite_mensal', 'created_at')
         read_only_fields = ('id', 'uuid', 'created_at')
 
     def validate(self, attrs):

@@ -64,7 +64,7 @@ class MovimentacaoAPITestCase(APITestCase):
             'tipo': Movimentacao.TipoMovimentacao.DESPESA,
             'data': '2026-07-05',
             'categoria': self.cat_alimentacao.id,
-            'forma_pagamento': 'Cartão de Débito'
+            'forma_pagamento': 'DEBITO'
         }
         response = self.client.post(self.list_url, payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -155,3 +155,47 @@ class MovimentacaoAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
         self.assertIn('Venda de Item', response.content.decode('utf-8'))
+
+    def test_parcelamento_and_config_cartao_endpoints(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Test Cartão POST & GET (Multi-tenant)
+        cartao_url = reverse('finance:cartao-list')
+        cartao_payload = {
+            'apelido': 'Nubank Black',
+            'ultimos_digitos': '1234',
+            'limite_cartao': '8000.00',
+            'dia_fechamento': 5,
+            'dia_vencimento': 12,
+            'meta_fatura_mensal': '2500.00',
+            'reducao_mensal_desejada': '300.00'
+        }
+        res_c = self.client.post(cartao_url, cartao_payload)
+        self.assertEqual(res_c.status_code, status.HTTP_201_CREATED)
+        cartao_id = res_c.data['id']
+        self.assertEqual(res_c.data['nome_exibicao'], 'Nubank Black (**** 1234)')
+
+        # User2 isolation test
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token2.key)
+        res_user2 = self.client.get(cartao_url)
+        self.assertEqual(len(res_user2.data), 0)
+
+        # Voltar credenciais para User1
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+
+        # Test Parcelamento Create com vinculo de Cartão
+        parc_url = reverse('finance:parcelamento-list')
+        parc_payload = {
+            'descricao': 'Notebook Novo',
+            'valor_total': '3600.00',
+            'num_parcelas': 12,
+            'data_primeira_parcela': '2026-08-10',
+            'categoria': self.cat_alimentacao.id,
+            'cartao': cartao_id
+        }
+        res_parc = self.client.post(parc_url, parc_payload)
+        self.assertEqual(res_parc.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Decimal(res_parc.data['valor_parcela']), Decimal('300.00'))
+        self.assertEqual(res_parc.data['cartao_nome'], 'Nubank Black (**** 1234)')
+
+

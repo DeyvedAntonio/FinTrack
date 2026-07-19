@@ -1,11 +1,13 @@
 import csv
 from django.http import HttpResponse
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Movimentacao
-from .serializers import MovimentacaoSerializer
+from .models import Movimentacao, Parcelamento, ConfigCartao
+from .serializers import MovimentacaoSerializer, ParcelamentoSerializer, ConfigCartaoSerializer
+
 
 
 class MovimentacaoViewSet(viewsets.ModelViewSet):
@@ -17,7 +19,7 @@ class MovimentacaoViewSet(viewsets.ModelViewSet):
     serializer_class = MovimentacaoSerializer
 
     def get_queryset(self):
-        queryset = Movimentacao.objects.filter(usuario=self.request.user).select_related('categoria')
+        queryset = Movimentacao.objects.filter(usuario=self.request.user).select_related('categoria', 'cartao')
         
         # Filtros por parâmetros de URL
         tipo = self.request.query_params.get('tipo')
@@ -28,6 +30,10 @@ class MovimentacaoViewSet(viewsets.ModelViewSet):
         if categoria:
             queryset = queryset.filter(categoria_id=categoria)
 
+        cartao = self.request.query_params.get('cartao')
+        if cartao:
+            queryset = queryset.filter(cartao_id=cartao)
+
         mes = self.request.query_params.get('mes')
         if mes and mes.isdigit():
             queryset = queryset.filter(data__month=int(mes))
@@ -35,6 +41,10 @@ class MovimentacaoViewSet(viewsets.ModelViewSet):
         ano = self.request.query_params.get('ano')
         if ano and ano.isdigit():
             queryset = queryset.filter(data__year=int(ano))
+
+        confirmado = self.request.query_params.get('confirmado')
+        if confirmado is not None:
+            queryset = queryset.filter(confirmado=(confirmado.lower() in ['true', '1']))
 
         descricao = self.request.query_params.get('descricao') or self.request.query_params.get('search')
         if descricao:
@@ -57,7 +67,7 @@ class MovimentacaoViewSet(viewsets.ModelViewSet):
         response.write('\ufeff')  # BOM (Byte Order Mark) para compatibilidade com Excel em UTF-8
 
         writer = csv.writer(response, delimiter=';')
-        writer.writerow(['ID', 'Tipo', 'Descrição', 'Valor (R$)', 'Data', 'Categoria', 'Forma de Pagamento', 'Observações'])
+        writer.writerow(['ID', 'Tipo', 'Descrição', 'Valor (R$)', 'Data', 'Mês Referência', 'Categoria', 'Cartão', 'Forma de Pagamento', 'Confirmado', 'Observações'])
 
         for mov in queryset:
             writer.writerow([
@@ -66,9 +76,42 @@ class MovimentacaoViewSet(viewsets.ModelViewSet):
                 mov.descricao,
                 f"{mov.valor:.2f}".replace('.', ','),
                 mov.data.strftime('%d/%m/%Y') if mov.data else '',
+                mov.mes_referencia.strftime('%m/%Y') if mov.mes_referencia else '',
                 mov.categoria.nome if mov.categoria else '',
-                mov.forma_pagamento or '',
+                mov.cartao.nome_exibicao if mov.cartao else '',
+                mov.get_forma_pagamento_display() if mov.forma_pagamento else '',
+                'Sim' if mov.confirmado else 'Não',
                 mov.observacoes or ''
             ])
 
         return response
+
+
+class ParcelamentoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para Gerenciamento de Compras Parceladas Recorrentes.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ParcelamentoSerializer
+
+    def get_queryset(self):
+        return Parcelamento.objects.filter(usuario=self.request.user).select_related('categoria', 'cartao')
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)
+
+
+class ConfigCartaoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para Gerenciamento Multiusuário de Cartões de Crédito.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ConfigCartaoSerializer
+
+    def get_queryset(self):
+        return ConfigCartao.objects.filter(usuario=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)
+
+
