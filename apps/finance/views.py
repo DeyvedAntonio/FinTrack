@@ -151,6 +151,9 @@ class PlanejamentoMensalViewSet(viewsets.ModelViewSet):
             'alocacao_estilo_vida_pct': serializer.validated_data.get('alocacao_estilo_vida_pct', 30),
             'alocacao_investimentos_pct': serializer.validated_data.get('alocacao_investimentos_pct', 20),
         }
+        # Aplica a metodologia configurada como base padrão para todos os registros do usuário
+        PlanejamentoMensal.objects.filter(usuario=request.user).update(**defaults)
+
         plan, created = PlanejamentoMensal.objects.update_or_create(
             usuario=request.user,
             mes_referencia=mes_ref,
@@ -200,11 +203,40 @@ class ResumoPlanejamentoAPIView(APIView):
         )
 
         receita_realizada = movs_mes.filter(tipo='RECEITA').aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
-        despesa_realizada = movs_mes.filter(tipo='DESPESA').aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+        movs_despesas = movs_mes.filter(tipo='DESPESA')
+        despesa_realizada = movs_despesas.aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
 
-        # Soma das parcelas ativas que cobrem o mês de referência
+        # Agregação precisa por pilar orçamentário
+        gastos_essenciais_realizados = movs_despesas.filter(
+            Q(categoria__pilar='ESSENCIAL') | Q(categoria__isnull=True)
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        gastos_estilo_vida_realizados = movs_despesas.filter(
+            categoria__pilar='ESTILO_DE_VIDA'
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        investimento_movs = movs_despesas.filter(
+            categoria__pilar='INVESTIMENTO'
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        from apps.investments.models import OperacaoInvestimento
+        ops = OperacaoInvestimento.objects.filter(
+            usuario=usuario,
+            tipo_operacao='COMPRA',
+            data_operacao__year=dt_ref.year,
+            data_operacao__month=dt_ref.month
+        )
+        investimento_ops = Decimal(str(sum((op.quantidade * op.preco_unitario + op.taxas) for op in ops)))
+
+        investimento_realizado = investimento_movs + investimento_ops
+
+        # Soma das parcelas ativas + despesas diretas no cartão de crédito que cobrem o mês de referência
+        fatura_cartao_direta = movs_despesas.filter(
+            Q(forma_pagamento='CREDITO_1X') | Q(cartao__isnull=False)
+        ).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
         parcelamentos = Parcelamento.objects.filter(usuario=usuario)
-        total_parcelas_mes = Decimal('0.00')
+        soma_parcelamentos_mes = Decimal('0.00')
         for p in parcelamentos:
             d_inicio = p.data_primeira_parcela.replace(day=1)
             # adiciona p.num_parcelas meses
@@ -214,15 +246,19 @@ class ResumoPlanejamentoAPIView(APIView):
             d_fim = date(y_end, m_end, 1)
 
             if d_inicio <= dt_ref < d_fim:
-                total_parcelas_mes += p.valor_parcela
+                soma_parcelamentos_mes += p.valor_parcela
 
-        # Base de cálculo para o orçamento consciente (maior entre receita esperada e receita realizada)
-        base_receita = max(receita_esperada, receita_realizada)
+        # Total de Faturas + Parcelas no mês (usado nos indicadores de exposição a crédito)
+        total_parcelas_mes = fatura_cartao_direta + soma_parcelamentos_mes
+
+        # Base de cálculo para o orçamento consciente (Renda Esperada cadastrada ou Renda Realizada se nula)
+        base_receita = receita_esperada if receita_esperada > 0 else receita_realizada
         teto_essenciais = base_receita * Decimal(str(pct_essencial / 100))
         teto_estilo_vida = base_receita * Decimal(str(pct_estilo / 100))
         teto_investimentos = base_receita * Decimal(str(pct_invest / 100))
 
-        disponivel_livre = base_receita - despesa_realizada - total_parcelas_mes - meta_investimento
+        # Disponível Livre: Renda - Despesas Diretas - Compras Parceladas - Meta de Investimento
+        disponivel_livre = base_receita - despesa_realizada - soma_parcelamentos_mes - meta_investimento
 
         # Cálculo do Score de Saúde (0 - 100)
         score = 100
@@ -233,9 +269,13 @@ class ResumoPlanejamentoAPIView(APIView):
             elif taxa_comprometimento_parcelas > 15:
                 score -= 15
 
-            if despesa_realizada > base_receita:
+            total_saida_caixa = despesa_realizada + soma_parcelamentos_mes
+            if total_saida_caixa > base_receita:
                 score -= 40
-            elif (despesa_realizada + total_parcelas_mes) > base_receita:
+            elif (total_saida_caixa + meta_investimento) > base_receita:
+                score -= 25
+
+            if disponivel_livre < 0 and (total_saida_caixa + meta_investimento) <= base_receita:
                 score -= 20
 
             if meta_investimento > 0 and (receita_realizada < meta_investimento):
@@ -248,6 +288,9 @@ class ResumoPlanejamentoAPIView(APIView):
             'receita_esperada': float(receita_esperada),
             'receita_realizada': float(receita_realizada),
             'despesa_realizada': float(despesa_realizada),
+            'gastos_essenciais_realizados': float(gastos_essenciais_realizados),
+            'gastos_estilo_vida_realizados': float(gastos_estilo_vida_realizados),
+            'investimento_realizado': float(investimento_realizado),
             'compromissos_parcelas': float(total_parcelas_mes),
             'meta_investimento': float(meta_investimento),
             'disponivel_livre': float(disponivel_livre),

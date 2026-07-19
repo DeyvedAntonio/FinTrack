@@ -31,11 +31,26 @@ if st.session_state["show_cat_form"]:
 
     st.markdown(f"### {'Editar Categoria' if is_editing else 'Nova Categoria'}")
     with st.form("form_categoria"):
-        nome_cat = st.text_input("Nome da Categoria", value=cat_obj.get("nome", ""), placeholder="Ex: Investimentos, Lazer, Educação")
+        nome_cat = st.text_input("Nome da Categoria", value=cat_obj.get("nome", ""), placeholder="Ex: Moradia, Lazer, Aportes em Ações")
         
         tipo_index = 1 if cat_obj.get("tipo") == "DESPESA" else 0
         tipo_cat = st.radio("Tipo da Categoria", options=["RECEITA", "DESPESA"], format_func=lambda x: "Receita" if x == "RECEITA" else "Despesa", index=tipo_index)
         
+        pilar_opts = {
+            "ESSENCIAL": "🏠 Essenciais (Necessidades)",
+            "ESTILO_DE_VIDA": "🍷 Estilo de Vida (Desejos)",
+            "INVESTIMENTO": "📈 Investimentos (Futuro)"
+        }
+        curr_pilar = cat_obj.get("pilar", "ESSENCIAL")
+        pilar_idx = list(pilar_opts.keys()).index(curr_pilar) if curr_pilar in pilar_opts else 0
+        pilar_cat = st.selectbox(
+            "Pilar do Orçamento Consciente (50/30/20)",
+            options=list(pilar_opts.keys()),
+            format_func=lambda x: pilar_opts.get(x, x),
+            index=pilar_idx,
+            help="Determina para qual coluna do gráfico de Planejamento Consciente os gastos desta categoria serão contabilizados."
+        )
+
         curr_limite = float(cat_obj.get("limite_mensal", 0.0))
         limite_cat = st.number_input("Limite Mensal de Orçamento (R$)", min_value=0.0, value=curr_limite, step=50.0, help="Defina um teto mensal de orçamento para acompanhar no Dashboard.")
 
@@ -49,7 +64,7 @@ if st.session_state["show_cat_form"]:
             if not nome_cat.strip():
                 st.error("O nome da categoria é obrigatório.")
             else:
-                success, res = CategoryService.save_category(cat_obj.get("id"), nome_cat.strip(), tipo_cat, limite_cat)
+                success, res = CategoryService.save_category(cat_obj.get("id"), nome_cat.strip(), tipo_cat, limite_cat, pilar_cat)
                 if success:
                     st.success("Categoria salva com sucesso.")
                     st.session_state["show_cat_form"] = False
@@ -101,11 +116,18 @@ if categorias:
     with col_desp:
         st.subheader("🔴 Categorias de Despesa")
         desp_list = [c for c in categorias if c["tipo"] == "DESPESA"]
+        pilar_labels = {
+            "ESSENCIAL": "🏠 Essenciais",
+            "ESTILO_DE_VIDA": "🍷 Estilo de Vida",
+            "INVESTIMENTO": "📈 Investimentos"
+        }
         if desp_list:
             for item in desp_list:
                 c1, c2, c3 = st.columns([4, 2, 2])
                 with c1:
                     st.write(f"🏷️ **{item['nome']}**")
+                    pilar_str = pilar_labels.get(item.get("pilar"), "🏠 Essenciais")
+                    st.caption(f"Pilar: **{pilar_str}**")
                     if float(item.get("limite_mensal", 0)) > 0:
                         st.caption(f"Orçamento Limite: {format_currency(item['limite_mensal'])}")
                 with c2:

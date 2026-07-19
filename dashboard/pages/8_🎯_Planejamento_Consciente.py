@@ -44,22 +44,29 @@ resumo = PlanningService.get_resumo_planejamento(mes_sel) or {}
 score = resumo.get("score_saude", 100)
 score_color = "🟢" if score >= 70 else ("🟡" if score >= 50 else "🔴")
 
-k1, k2, k3, k4 = st.columns(4)
+k1, k2, k3, k4, k5 = st.columns(5)
 with k1:
     st.metric("Score de Saúde", f"{score_color} {score}%")
 with k2:
     st.metric("Receita Esperada", format_currency(resumo.get("receita_esperada", 0.0), moeda))
 with k3:
-    st.metric("Faturas/Parcelas no Mês", format_currency(resumo.get("compromissos_parcelas", 0.0), moeda))
+    st.metric("Total de Despesas", format_currency(resumo.get("despesa_realizada", 0.0), moeda))
 with k4:
+    st.metric("Faturas/Parcelas no Mês", format_currency(resumo.get("compromissos_parcelas", 0.0), moeda))
+with k5:
     disp = resumo.get("disponivel_livre", 0.0)
     st.metric("Disponível Livre p/ Gastar", format_currency(disp, moeda))
 
 st.divider()
 
+# Obter os percentuais configurados atuais
+curr_pct_ess = resumo.get("pct_essenciais", 50)
+curr_pct_est = resumo.get("pct_estilo_vida", 30)
+curr_pct_inv = resumo.get("pct_investimentos", 20)
+
 # As abas são SEMPRE exibidas
 tab_orcamento, tab_simulador, tab_guia = st.tabs([
-    "📊 Orçamento Consciente (50/30/20)",
+    f"📊 Orçamento Consciente ({curr_pct_ess}/{curr_pct_est}/{curr_pct_inv})",
     "🛍️ Simulador de Novas Compras",
     "💡 Dicas de Saúde Financeira"
 ])
@@ -78,11 +85,11 @@ with tab_orcamento:
         st.write("**Metodologia de Alocação de Gastos (%)**")
         p1, p2, p3 = st.columns(3)
         with p1:
-            pct_ess = st.number_input("Essenciais (Necessidades %)", value=int(resumo.get("pct_essenciais", 50)), min_value=0, max_value=100)
+            pct_ess = st.number_input("Essenciais (Necessidades %)", value=int(curr_pct_ess), min_value=0, max_value=100)
         with p2:
-            pct_est = st.number_input("Estilo de Vida (Desejos %)", value=int(resumo.get("pct_estilo_vida", 30)), min_value=0, max_value=100)
+            pct_est = st.number_input("Estilo de Vida (Desejos %)", value=int(curr_pct_est), min_value=0, max_value=100)
         with p3:
-            pct_inv = st.number_input("Investimentos / Futuro (%)", value=int(resumo.get("pct_investimentos", 20)), min_value=0, max_value=100)
+            pct_inv = st.number_input("Investimentos / Futuro (%)", value=int(curr_pct_inv), min_value=0, max_value=100)
 
         btn_save_plan = st.form_submit_button("Salvar Planejamento Base", use_container_width=True)
 
@@ -108,11 +115,18 @@ with tab_orcamento:
     st.divider()
     st.subheader("Comparativo Orçamentário: Teto Ideal vs Realizado")
 
+    pilar_ess = f"Necessidades ({curr_pct_ess}%)"
+    pilar_est = f"Estilo de Vida ({curr_pct_est}%)"
+    pilar_inv = f"Investimentos ({curr_pct_inv}%)"
+
     data_chart = [
-        {"Pilar": "Necessidades (50%)", "Tipo": "Gastos Reais", "Valor (R$)": resumo.get("despesa_realizada", 0.0)},
-        {"Pilar": "Necessidades (50%)", "Tipo": "Teto Orçamentário", "Valor (R$)": resumo.get("teto_essenciais", 0.0)},
-        {"Pilar": "Investimentos (20%)", "Tipo": "Meta de Aporte", "Valor (R$)": resumo.get("meta_investimento", 0.0)},
-        {"Pilar": "Investimentos (20%)", "Tipo": "Teto Orçamentário", "Valor (R$)": resumo.get("teto_investimentos", 0.0)},
+        {"Pilar": pilar_ess, "Tipo": "Gastos Reais", "Valor (R$)": resumo.get("gastos_essenciais_realizados", 0.0)},
+        {"Pilar": pilar_ess, "Tipo": "Teto Orçamentário", "Valor (R$)": resumo.get("teto_essenciais", 0.0)},
+        {"Pilar": pilar_est, "Tipo": "Gastos Reais", "Valor (R$)": resumo.get("gastos_estilo_vida_realizados", 0.0)},
+        {"Pilar": pilar_est, "Tipo": "Teto Orçamentário", "Valor (R$)": resumo.get("teto_estilo_vida", 0.0)},
+        {"Pilar": pilar_inv, "Tipo": "Aportes Realizados", "Valor (R$)": resumo.get("investimento_realizado", 0.0)},
+        {"Pilar": pilar_inv, "Tipo": "Meta de Aporte", "Valor (R$)": resumo.get("meta_investimento", 0.0)},
+        {"Pilar": pilar_inv, "Tipo": "Teto Orçamentário", "Valor (R$)": resumo.get("teto_investimentos", 0.0)},
         {"Pilar": "Cartões & Parcelas", "Tipo": "Compromisso Mensal", "Valor (R$)": resumo.get("compromissos_parcelas", 0.0)},
     ]
     df_chart = pd.DataFrame(data_chart)
@@ -127,6 +141,7 @@ with tab_orcamento:
         color_discrete_map={
             "Gastos Reais": "#EF4444",
             "Teto Orçamentário": "#3B82F6",
+            "Aportes Realizados": "#059669",
             "Meta de Aporte": "#10B981",
             "Compromisso Mensal": "#F59E0B"
         }

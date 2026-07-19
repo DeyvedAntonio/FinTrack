@@ -7,13 +7,13 @@ class CategoryRepository:
         return BaseRepository.request("GET", "categories/", params=params)
 
     @staticmethod
-    def create(nome, tipo, limite_mensal=0.0):
-        payload = {"nome": nome, "tipo": tipo, "limite_mensal": limite_mensal}
+    def create(nome, tipo, limite_mensal=0.0, pilar='ESSENCIAL'):
+        payload = {"nome": nome, "tipo": tipo, "limite_mensal": limite_mensal, "pilar": pilar}
         return BaseRepository.request("POST", "categories/", payload)
 
     @staticmethod
-    def update(cat_id, nome, tipo, limite_mensal=0.0):
-        payload = {"nome": nome, "tipo": tipo, "limite_mensal": limite_mensal}
+    def update(cat_id, nome, tipo, limite_mensal=0.0, pilar='ESSENCIAL'):
+        payload = {"nome": nome, "tipo": tipo, "limite_mensal": limite_mensal, "pilar": pilar}
         return BaseRepository.request("PUT", f"categories/{cat_id}/", payload)
 
     @staticmethod
