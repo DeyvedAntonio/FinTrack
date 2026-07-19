@@ -123,8 +123,9 @@ if data_receitas:
     for item in data_receitas:
         c_info, c_val, c_actions = st.columns([4, 2, 2])
         with c_info:
+            obs_str = f" | 📝 {item['observacoes']}" if item.get('observacoes') else ""
             st.markdown(f"**{item['descricao']}**")
-            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} {f'| 📝 {item[\"observacoes\"]}' if item.get('observacoes') else ''}")
+            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']}{obs_str}")
         with c_val:
             st.markdown(f"<span style='color: #10B981; font-weight: bold; font-size: 1.2rem;'>+ {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)
         with c_actions:

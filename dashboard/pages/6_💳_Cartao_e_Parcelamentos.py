@@ -1,7 +1,11 @@
 import streamlit as st
+# pyrefly: ignore [missing-import]
 from core.theme import apply_theme, format_currency
+# pyrefly: ignore [missing-import]
 from core.session import check_authentication
+# pyrefly: ignore [missing-import]
 from services.card_service import CardService
+# pyrefly: ignore [missing-import]
 from services.category_service import CategoryService
 
 st.set_page_config(page_title="Cartões & Parcelamentos | FinTrack", page_icon="💳", layout="wide")

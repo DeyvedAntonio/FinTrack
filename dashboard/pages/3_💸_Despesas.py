@@ -154,8 +154,9 @@ if data_despesas:
         c_info, c_val, c_actions = st.columns([4, 2, 2])
         with c_info:
             cartao_str = f" | 💳 {item['cartao_nome']}" if item.get('cartao_nome') else ""
+            obs_str = f" | 📝 {item['observacoes']}" if item.get('observacoes') else ""
             st.markdown(f"**{item['descricao']}**")
-            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} | 💵 {item.get('forma_pagamento_display') or 'Não informada'}{cartao_str} {f'| 📝 {item[\"observacoes\"]}' if item.get('observacoes') else ''}")
+            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} | 💵 {item.get('forma_pagamento_display') or 'Não informada'}{cartao_str}{obs_str}")
         with c_val:
             st.markdown(f"<span style='color: #EF4444; font-weight: bold; font-size: 1.2rem;'>- {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)
         with c_actions:
