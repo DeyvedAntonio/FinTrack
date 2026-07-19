@@ -17,7 +17,7 @@ if "show_cat_form" not in st.session_state:
     st.session_state["show_cat_form"] = False
 
 # Botão para Nova Categoria
-if st.button("➕ Nova Categoria"):
+if st.button("➕ Nova Categoria", help="Nova Categoria"):
     st.session_state["edit_cat"] = None
     st.session_state["show_cat_form"] = True
 
@@ -84,7 +84,7 @@ if categorias:
                         st.session_state["show_cat_form"] = True
                         st.rerun()
                 with c3:
-                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}"):
+                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}", help="Excluir"):
                         succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")
@@ -111,7 +111,7 @@ if categorias:
                         st.session_state["show_cat_form"] = True
                         st.rerun()
                 with c3:
-                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}"):
+                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}", help="Excluir"):
                         succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")

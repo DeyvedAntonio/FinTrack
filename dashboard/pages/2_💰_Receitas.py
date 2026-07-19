@@ -33,7 +33,7 @@ if "show_receita_form" not in st.session_state:
 
 # Botão para Nova Receita
 with col_header:
-    if st.button("➕ Nova Receita"):
+    if st.button("➕ Nova Receita", help="Nova Receita"):
         st.session_state["edit_receita"] = None
         st.session_state["show_receita_form"] = True
 
@@ -165,7 +165,7 @@ if data_receitas:
                     st.session_state["show_receita_form"] = True
                     st.rerun()
             with col_act2:
-                if st.button("🗑️ Excluir", key=f"del_rec_{item['id']}"):
+                if st.button("🗑️ Excluir", key=f"del_rec_{item['id']}", help="Excluir"):
                     succ_del, _ = FinanceService.delete_movimentacao(item["id"])
                     if succ_del:
                         st.success("Receita excluída.")

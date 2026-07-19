@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 def apply_theme():
@@ -95,6 +96,36 @@ def apply_theme():
         }
         </style>
     """, unsafe_allow_html=True)
+
+    components.html("""
+        <script>
+        const parentDoc = window.parent.document;
+        function styleButtons() {
+            const buttons = parentDoc.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const text = (btn.innerText || btn.textContent || '').trim();
+                const label = btn.getAttribute('aria-label') || '';
+                const combined = (text + ' ' + label).toLowerCase();
+                
+                if (combined.includes('nova') || combined.includes('novo') || combined.includes('adicionar')) {
+                    btn.style.setProperty('background-color', '#10B981', 'important');
+                    btn.style.setProperty('color', '#FFFFFF', 'important');
+                    btn.style.setProperty('border', 'none', 'important');
+                } else if (combined.includes('excluir') || combined.includes('deletar')) {
+                    btn.style.setProperty('background-color', '#DC2626', 'important');
+                    btn.style.setProperty('color', '#FFFFFF', 'important');
+                    btn.style.setProperty('border', '1px solid #B91C1C', 'important');
+                }
+            });
+        }
+        styleButtons();
+        if (!window.parent._fintrackButtonObserver) {
+            window.parent._fintrackButtonObserver = true;
+            const observer = new MutationObserver(styleButtons);
+            observer.observe(parentDoc.body, { childList: true, subtree: true });
+        }
+        </script>
+    """, height=0, width=0)
 
 
 def format_currency(val, currency_code="BRL"):
