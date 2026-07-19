@@ -121,6 +121,7 @@ class ConfigCartaoViewSet(viewsets.ModelViewSet):
 class PlanejamentoMensalViewSet(viewsets.ModelViewSet):
     """
     ViewSet para Planejamento Financeiro Mensal do Usuário.
+    Suporta criação e atualização transparente (upsert) por usuário e mês.
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PlanejamentoMensalSerializer
@@ -128,8 +129,25 @@ class PlanejamentoMensalViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return PlanejamentoMensal.objects.filter(usuario=self.request.user)
 
-    def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        mes_ref = serializer.validated_data['mes_referencia'].replace(day=1)
+        defaults = {
+            'receita_esperada': serializer.validated_data.get('receita_esperada', Decimal('0.00')),
+            'meta_investimento_mensal': serializer.validated_data.get('meta_investimento_mensal', Decimal('0.00')),
+            'alocacao_essenciais_pct': serializer.validated_data.get('alocacao_essenciais_pct', 50),
+            'alocacao_estilo_vida_pct': serializer.validated_data.get('alocacao_estilo_vida_pct', 30),
+            'alocacao_investimentos_pct': serializer.validated_data.get('alocacao_investimentos_pct', 20),
+        }
+        plan, created = PlanejamentoMensal.objects.update_or_create(
+            usuario=request.user,
+            mes_referencia=mes_ref,
+            defaults=defaults
+        )
+        res_serializer = self.get_serializer(plan)
+        return Response(res_serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 class ResumoPlanejamentoAPIView(APIView):

@@ -4,18 +4,16 @@ from repositories.planning_repository import PlanningRepository
 class PlanningService:
     @staticmethod
     def get_resumo_planejamento(mes=None):
-        status_code, data = PlanningRepository.get_resumo_planejamento(mes)
-        if status_code == 200:
+        success, data = PlanningRepository.get_resumo_planejamento(mes)
+        if success and isinstance(data, dict):
             return data
         return None
 
     @staticmethod
     def save_planejamento(payload, plan_id=None):
         if plan_id:
-            status_code, data = PlanningRepository.update_planejamento(plan_id, payload)
-        else:
-            status_code, data = PlanningRepository.create_planejamento(payload)
-        return status_code in (200, 201), data
+            return PlanningRepository.update_planejamento(plan_id, payload)
+        return PlanningRepository.create_planejamento(payload)
 
     @staticmethod
     def simular_nova_compra(valor_total, num_parcelas, disponivel_atual):

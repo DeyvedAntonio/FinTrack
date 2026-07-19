@@ -1,6 +1,7 @@
 import datetime
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 from core.theme import apply_theme, format_currency
 from core.session import init_session
@@ -97,7 +98,7 @@ with tab_orcamento:
                     "alocacao_estilo_vida_pct": pct_est,
                     "alocacao_investimentos_pct": pct_inv
                 }
-                succ_plan, _ = PlanningService.save_planejamento(payload_plan, plan_id=resumo.get("planejamento_id"))
+                succ_plan, _ = PlanningService.save_planejamento(payload_plan)
                 if succ_plan:
                     st.success("Planejamento base atualizado com sucesso! Ele agora é válido para seus próximos meses.")
                     st.rerun()
@@ -108,14 +109,35 @@ with tab_orcamento:
     st.subheader("Comparativo Orçamentário: Teto Ideal vs Realizado")
 
     data_chart = [
-        {"Métrica": "Despesas Essenciais (Gastos Reais)", "Valor (R$)": resumo.get("despesa_realizada", 0.0)},
-        {"Métrica": "Teto Essenciais (50% Ideal)", "Valor (R$)": resumo.get("teto_essenciais", 0.0)},
-        {"Métrica": "Meta de Investimentos", "Valor (R$)": resumo.get("meta_investimento", 0.0)},
-        {"Métrica": "Teto Investimentos (20% Ideal)", "Valor (R$)": resumo.get("teto_investimentos", 0.0)},
-        {"Métrica": "Faturas / Parcelas do Mês", "Valor (R$)": resumo.get("compromissos_parcelas", 0.0)},
+        {"Pilar": "Necessidades (50%)", "Tipo": "Gastos Reais", "Valor (R$)": resumo.get("despesa_realizada", 0.0)},
+        {"Pilar": "Necessidades (50%)", "Tipo": "Teto Orçamentário", "Valor (R$)": resumo.get("teto_essenciais", 0.0)},
+        {"Pilar": "Investimentos (20%)", "Tipo": "Meta de Aporte", "Valor (R$)": resumo.get("meta_investimento", 0.0)},
+        {"Pilar": "Investimentos (20%)", "Tipo": "Teto Orçamentário", "Valor (R$)": resumo.get("teto_investimentos", 0.0)},
+        {"Pilar": "Cartões & Parcelas", "Tipo": "Compromisso Mensal", "Valor (R$)": resumo.get("compromissos_parcelas", 0.0)},
     ]
     df_chart = pd.DataFrame(data_chart)
-    st.bar_chart(df_chart, x="Métrica", y="Valor (R$)", color="#3B82F6")
+    
+    fig_plan = px.bar(
+        df_chart,
+        x="Pilar",
+        y="Valor (R$)",
+        color="Tipo",
+        barmode="group",
+        text_auto=".2f",
+        color_discrete_map={
+            "Gastos Reais": "#EF4444",
+            "Teto Orçamentário": "#3B82F6",
+            "Meta de Aporte": "#10B981",
+            "Compromisso Mensal": "#F59E0B"
+        }
+    )
+    fig_plan.update_layout(
+        xaxis_title="Pilar Orçamentário",
+        yaxis_title="Valor (R$)",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(l=20, r=20, t=30, b=20)
+    )
+    st.plotly_chart(fig_plan, use_container_width=True)
 
 with tab_simulador:
     st.subheader("Simulador Inteligente de Impacto de Compras")
