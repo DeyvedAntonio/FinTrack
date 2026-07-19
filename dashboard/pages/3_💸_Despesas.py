@@ -7,6 +7,8 @@ from services.finance_service import FinanceService
 from services.category_service import CategoryService
 from services.card_service import CardService
 
+from components.kpi_cards import render_single_kpi_card
+
 st.set_page_config(page_title="Despesas | FinTrack", page_icon="💸", layout="wide")
 apply_theme()
 check_authentication()
@@ -14,8 +16,12 @@ check_authentication()
 user = st.session_state["user"]
 moeda = user.get("moeda", "BRL")
 
-st.title("💸 Gerenciamento de Despesas")
-st.caption("Cadastre e controle todos os seus gastos e custos.")
+# Cabeçalho com Titulo e Card de Total de Despesas
+col_header, col_kpi = st.columns([3, 1])
+with col_header:
+    st.title("💸 Gerenciamento de Despesas")
+    st.caption("Cadastre e controle todos os seus gastos e custos.")
+kpi_container = col_kpi.container()
 
 # Obter Categorias e Cartões via Services
 cat_dict = CategoryService.get_category_dict(tipo="DESPESA")
@@ -28,9 +34,10 @@ if "show_despesa_form" not in st.session_state:
     st.session_state["show_despesa_form"] = False
 
 # Botão para Nova Despesa
-if st.button("➕ Nova Despesa"):
-    st.session_state["edit_despesa"] = None
-    st.session_state["show_despesa_form"] = True
+with col_header:
+    if st.button("➕ Nova Despesa"):
+        st.session_state["edit_despesa"] = None
+        st.session_state["show_despesa_form"] = True
 
 # Formulário de Cadastro / Edição
 if st.session_state["show_despesa_form"]:
@@ -162,6 +169,11 @@ if f_ano:
     params["ano"] = f_ano
 
 data_despesas = FinanceService.get_movimentacoes(params=params)
+total_despesas_valor = sum(float(item["valor"]) for item in data_despesas) if data_despesas else 0.0
+
+# Renderizar KPI Card no canto superior direito
+with kpi_container:
+    render_single_kpi_card("Total de Despesas", total_despesas_valor, value_type="negative", moeda=moeda)
 
 if data_despesas:
     st.subheader(f"Total de Registros ({len(data_despesas)})")
@@ -171,9 +183,9 @@ if data_despesas:
         with c_info:
             cartao_str = f" | 💳 {item['cartao_nome']}" if item.get('cartao_nome') else ""
             obs_str = f" | 📝 {item['observacoes']}" if item.get('observacoes') else ""
-            rec_tag = " 🔁 Recorrente" if item.get('is_recorrente') else ""
-            st.markdown(f"**{item['descricao']}**{rec_tag}")
-            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} | 💵 {item.get('forma_pagamento_display') or 'Não informada'}{cartao_str}{obs_str}")
+            rec_tag = " | 🔁 Recorrente" if item.get('is_recorrente') else ""
+            st.markdown(f"**{item['descricao']}**")
+            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']}{rec_tag} | 💵 {item.get('forma_pagamento_display') or 'Não informada'}{cartao_str}{obs_str}")
         with c_val:
             st.markdown(f"<span style='color: #EF4444; font-weight: bold; font-size: 1.2rem;'>- {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)
         with c_actions:

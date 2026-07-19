@@ -29,3 +29,14 @@ def render_kpi_cards(saldo_atual, total_receitas, total_despesas, moeda="BRL"):
                 <div class="kpi-value negative">{format_currency(total_despesas, moeda)}</div>
             </div>
         """, unsafe_allow_html=True)
+
+
+def render_single_kpi_card(title, value, value_type="negative", moeda="BRL"):
+    """Renderiza um único KPI Card (ex: no topo superior direito de telas de gerenciamento)."""
+    val_str = format_currency(value, moeda) if isinstance(value, (int, float)) else str(value)
+    st.markdown(f"""
+        <div class="kpi-card">
+            <div class="kpi-title">{title}</div>
+            <div class="kpi-value {value_type}">{val_str}</div>
+        </div>
+    """, unsafe_allow_html=True)

@@ -21,7 +21,7 @@ def apply_theme():
             --text: #1F2937;
         }
 
-        /* Botão Primário */
+        /* Botão Primário Padrão */
         .stButton>button {
             background-color: #2563EB;
             color: white;
@@ -37,25 +37,53 @@ def apply_theme():
             transform: translateY(-1px);
         }
 
+        /* Botões de Adição / Novo (Verde) */
+        div.stButton > button[aria-label*="Nova"],
+        div.stButton > button[aria-label*="Novo"],
+        div.stButton > button[aria-label*="Adicionar"] {
+            background-color: #10B981 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+        }
+        div.stButton > button[aria-label*="Nova"]:hover,
+        div.stButton > button[aria-label*="Novo"]:hover,
+        div.stButton > button[aria-label*="Adicionar"]:hover {
+            background-color: #059669 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Botões de Excluir / Deletar (Vermelho Opaco) */
+        div.stButton > button[aria-label*="Excluir"],
+        div.stButton > button[aria-label*="Deletar"] {
+            background-color: #DC2626 !important;
+            color: #FFFFFF !important;
+            border: 1px solid #B91C1C !important;
+        }
+        div.stButton > button[aria-label*="Excluir"]:hover,
+        div.stButton > button[aria-label*="Deletar"]:hover {
+            background-color: #B91C1C !important;
+            color: #FFFFFF !important;
+        }
+
         /* KPI Cards */
         .kpi-card {
-            background-color: white;
-            padding: 1.25rem;
+            background-color: #1F2937;
+            padding: 1rem 1.25rem;
             border-radius: 12px;
-            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
-            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px 0 rgba(0,0,0,0.2);
+            border: 1px solid #374151;
         }
         .kpi-title {
-            font-size: 0.875rem;
-            color: #64748B;
+            font-size: 0.85rem;
+            color: #9CA3AF;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
         .kpi-value {
-            font-size: 1.75rem;
+            font-size: 1.65rem;
             font-weight: 700;
-            margin-top: 0.5rem;
+            margin-top: 0.25rem;
         }
         .kpi-value.positive { color: #10B981; }
         .kpi-value.negative { color: #EF4444; }

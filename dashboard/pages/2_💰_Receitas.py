@@ -6,6 +6,8 @@ from core.session import check_authentication
 from services.finance_service import FinanceService
 from services.category_service import CategoryService
 
+from components.kpi_cards import render_single_kpi_card
+
 st.set_page_config(page_title="Receitas | FinTrack", page_icon="💰", layout="wide")
 apply_theme()
 check_authentication()
@@ -13,8 +15,12 @@ check_authentication()
 user = st.session_state["user"]
 moeda = user.get("moeda", "BRL")
 
-st.title("💰 Gerenciamento de Receitas")
-st.caption("Cadastre e acompanhe todas as suas entradas financeiras.")
+# Cabeçalho com Título e Card de Total de Receitas
+col_header, col_kpi = st.columns([3, 1])
+with col_header:
+    st.title("💰 Gerenciamento de Receitas")
+    st.caption("Cadastre e acompanhe todas as suas entradas financeiras.")
+kpi_container = col_kpi.container()
 
 # Obter Categorias do Tipo RECEITA
 cat_dict = CategoryService.get_category_dict(tipo="RECEITA")
@@ -26,9 +32,10 @@ if "show_receita_form" not in st.session_state:
     st.session_state["show_receita_form"] = False
 
 # Botão para Nova Receita
-if st.button("➕ Nova Receita"):
-    st.session_state["edit_receita"] = None
-    st.session_state["show_receita_form"] = True
+with col_header:
+    if st.button("➕ Nova Receita"):
+        st.session_state["edit_receita"] = None
+        st.session_state["show_receita_form"] = True
 
 # Formulário de Cadastro / Edição
 if st.session_state["show_receita_form"]:
@@ -132,6 +139,11 @@ if f_ano:
     params["ano"] = f_ano
 
 data_receitas = FinanceService.get_movimentacoes(params=params)
+total_receitas_valor = sum(float(item["valor"]) for item in data_receitas) if data_receitas else 0.0
+
+# Renderizar KPI Card no canto superior direito
+with kpi_container:
+    render_single_kpi_card("Total de Receitas", total_receitas_valor, value_type="positive", moeda=moeda)
 
 if data_receitas:
     st.subheader(f"Total de Registros ({len(data_receitas)})")
@@ -140,9 +152,9 @@ if data_receitas:
         c_info, c_val, c_actions = st.columns([4, 2, 2])
         with c_info:
             obs_str = f" | 📝 {item['observacoes']}" if item.get('observacoes') else ""
-            rec_tag = " 🔁 Recorrente" if item.get('is_recorrente') else ""
-            st.markdown(f"**{item['descricao']}**{rec_tag}")
-            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']}{obs_str}")
+            rec_tag = " | 🔁 Recorrente" if item.get('is_recorrente') else ""
+            st.markdown(f"**{item['descricao']}**")
+            st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']}{rec_tag}{obs_str}")
         with c_val:
             st.markdown(f"<span style='color: #10B981; font-weight: bold; font-size: 1.2rem;'>+ {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)
         with c_actions:
