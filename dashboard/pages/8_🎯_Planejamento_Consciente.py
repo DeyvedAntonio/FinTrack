@@ -158,19 +158,32 @@ with tab_simulador:
     st.subheader("Simulador Inteligente de Impacto de Compras")
     st.write("Antes de assumir um novo parcelamento no cartão de crédito, simule o impacto na sua renda disponível mensal dos próximos meses.")
 
+    modo_simulacao = st.radio(
+        "Modo de Simulação",
+        options=["Por Valor Total da Compra", "Por Valor Direto da Parcela"],
+        horizontal=True,
+        help="Escolha se deseja calcular a parcela dividindo o total ou informando o valor exato da parcela mensal (com juros/taxas embutidas)."
+    )
+
+    disp_atual = resumo.get("disponivel_livre", 0.0)
     s_col1, s_col2 = st.columns(2)
     with s_col1:
-        val_compra = st.number_input("Valor Total da Nova Compra (R$)", min_value=10.0, value=1200.0, step=100.0)
-        n_parc = st.number_input("Número de Parcelas Desejado (x)", min_value=1, max_value=48, value=6)
+        if modo_simulacao == "Por Valor Total da Compra":
+            val_compra = st.number_input("Valor Total da Nova Compra (R$)", min_value=10.0, value=1200.0, step=100.0)
+            n_parc = st.number_input("Número de Parcelas Desejado (x)", min_value=1, max_value=48, value=6)
+            simulacao = PlanningService.simular_nova_compra(val_compra, n_parc, disp_atual)
+        else:
+            val_parc_direto = st.number_input("Valor Direto da Parcela Mensal (R$)", min_value=1.0, value=10.0, step=5.0, help="Informe o valor fixo da parcela já com taxas e juros inclusos.")
+            n_parc = st.number_input("Número de Parcelas Desejado (x)", min_value=1, max_value=48, value=15)
+            simulacao = PlanningService.simular_nova_compra(0.0, n_parc, disp_atual, valor_parcela_direto=val_parc_direto)
 
     with s_col2:
-        disp_atual = resumo.get("disponivel_livre", 0.0)
         st.markdown(f"**Disponível Livre Atual no Mês**: `{format_currency(disp_atual, moeda)}`")
-        
-        simulacao = PlanningService.simular_nova_compra(val_compra, n_parc, disp_atual)
         
         rec_badge = "🟢" if "Saudável" in simulacao["recomendacao"] else ("🟡" if "Moderado" in simulacao["recomendacao"] else "🔴")
 
+        if modo_simulacao == "Por Valor Direto da Parcela":
+            st.write(f"• Valor Total Estimado ({n_parc}x): **{format_currency(simulacao['valor_total_calculado'], moeda)}**")
         st.write(f"• Valor da Nova Parcela Mensal: **{format_currency(simulacao['valor_parcela'], moeda)}**")
         st.write(f"• Novo Disponível Livre Estimado: **{format_currency(simulacao['novo_disponivel'], moeda)}**")
         st.write(f"• Comprometimento da Renda Livre: **{simulacao['impacto_percentual']}%**")

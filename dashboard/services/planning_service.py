@@ -16,8 +16,14 @@ class PlanningService:
         return PlanningRepository.create_planejamento(payload)
 
     @staticmethod
-    def simular_nova_compra(valor_total, num_parcelas, disponivel_atual):
-        parcela_mensal = round(valor_total / num_parcelas, 2) if num_parcelas > 0 else valor_total
+    def simular_nova_compra(valor_total, num_parcelas, disponivel_atual, valor_parcela_direto=None):
+        if valor_parcela_direto is not None and valor_parcela_direto > 0:
+            parcela_mensal = round(valor_parcela_direto, 2)
+            valor_total_calculado = round(parcela_mensal * num_parcelas, 2) if num_parcelas > 0 else parcela_mensal
+        else:
+            parcela_mensal = round(valor_total / num_parcelas, 2) if num_parcelas > 0 else valor_total
+            valor_total_calculado = valor_total
+
         novo_disponivel = disponivel_atual - parcela_mensal
         impacto_percentual = round((parcela_mensal / disponivel_atual) * 100, 1) if disponivel_atual > 0 else 100.0
         
@@ -31,6 +37,7 @@ class PlanningService:
 
         return {
             'valor_parcela': parcela_mensal,
+            'valor_total_calculado': valor_total_calculado,
             'novo_disponivel': novo_disponivel,
             'impacto_percentual': impacto_percentual,
             'recomendacao': recomendacao
