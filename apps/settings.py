@@ -80,24 +80,28 @@ TEMPLATES = [
 WSGI_APPLICATION = "apps.wsgi.application"
 
 
+import dj_database_url
+
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASE_URL = config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=config('DB_SSL_REQUIRE', default=True, cast=bool)
+        )
     }
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': config('POSTGRES_DB', 'postgres'),  # postgres
-    #     'USER': config('POSTGRES_USER', 'postgres'),
-    #     'PASSWORD': config('POSTGRES_PASSWORD', 'postgres'),
-    #     # 'db' caso exista um serviço com esse nome.
-    #     'HOST': config('DB_HOST', '127.0.0.1'),
-    #     'PORT': 5431,
-    # }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
