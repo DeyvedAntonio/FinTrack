@@ -10,6 +10,7 @@ click==8.4.2
 colorama==0.4.6
 dj-database-url==3.1.2
 Django==6.0.7
+django-cors-headers==4.9.0
 django-extensions==4.1
 djangorestframework==3.17.1
 gitdb==4.0.12
