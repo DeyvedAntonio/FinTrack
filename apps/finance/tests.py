@@ -198,4 +198,29 @@ class MovimentacaoAPITestCase(APITestCase):
         self.assertEqual(Decimal(res_parc.data['valor_parcela']), Decimal('300.00'))
         self.assertEqual(res_parc.data['cartao_nome'], 'Nubank Black (**** 1234)')
 
+    def test_planejamento_mensal_and_resumo_endpoint(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        plan_url = reverse('finance:planejamento-list')
+        plan_payload = {
+            'mes_referencia': '2026-07-01',
+            'receita_esperada': '5000.00',
+            'meta_investimento_mensal': '1000.00',
+            'alocacao_essenciais_pct': 50,
+            'alocacao_estilo_vida_pct': 30,
+            'alocacao_investimentos_pct': 20
+        }
+        res_plan = self.client.post(plan_url, plan_payload)
+        self.assertEqual(res_plan.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(float(res_plan.data['receita_esperada']), 5000.00)
+
+        # Test Resumo Endpoint
+        resumo_url = reverse('finance:planejamento-resumo') + '?mes=2026-07'
+        res_resumo = self.client.get(resumo_url)
+        self.assertEqual(res_resumo.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_resumo.data['has_planejamento'])
+        self.assertEqual(res_resumo.data['receita_esperada'], 5000.00)
+        self.assertIn('disponivel_livre', res_resumo.data)
+        self.assertIn('score_saude', res_resumo.data)
+
 

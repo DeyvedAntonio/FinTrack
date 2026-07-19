@@ -179,3 +179,38 @@ class ConfigCartao(BaseModel):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class PlanejamentoMensal(BaseModel):
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='planejamentos',
+        verbose_name='Usuário'
+    )
+    mes_referencia = models.DateField('Mês de Referência (1º dia do mês)')
+    receita_esperada = models.DecimalField('Receita Mensal Esperada', max_digits=12, decimal_places=2, default=0.00)
+    meta_investimento_mensal = models.DecimalField('Meta de Investimento Mensal', max_digits=12, decimal_places=2, default=0.00)
+    alocacao_essenciais_pct = models.PositiveIntegerField('Percentual Essenciais (%)', default=50)
+    alocacao_estilo_vida_pct = models.PositiveIntegerField('Percentual Estilo de Vida (%)', default=30)
+    alocacao_investimentos_pct = models.PositiveIntegerField('Percentual Investimentos (%)', default=20)
+
+    class Meta:
+        verbose_name = 'Planejamento Mensal'
+        verbose_name_plural = 'Planejamentos Mensais'
+        unique_together = ('usuario', 'mes_referencia')
+        ordering = ['-mes_referencia']
+
+    def __str__(self):
+        return f"Planejamento {self.mes_referencia.strftime('%m/%Y')} - R$ {self.receita_esperada:.2f}"
+
+    def clean(self):
+        super().clean()
+        if self.mes_referencia and self.mes_referencia.day != 1:
+            self.mes_referencia = self.mes_referencia.replace(day=1)
+
+    def save(self, *args, **kwargs):
+        if self.mes_referencia and self.mes_referencia.day != 1:
+            self.mes_referencia = self.mes_referencia.replace(day=1)
+        self.full_clean()
+        super().save(*args, **kwargs)

@@ -1,12 +1,15 @@
 import csv
+from datetime import datetime, date
+from decimal import Decimal
+from django.db.models import Sum
 from django.http import HttpResponse
 from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Movimentacao, Parcelamento, ConfigCartao
-from .serializers import MovimentacaoSerializer, ParcelamentoSerializer, ConfigCartaoSerializer
+from .models import Movimentacao, Parcelamento, ConfigCartao, PlanejamentoMensal
+from .serializers import MovimentacaoSerializer, ParcelamentoSerializer, ConfigCartaoSerializer, PlanejamentoMensalSerializer
 
 
 
@@ -113,5 +116,118 @@ class ConfigCartaoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
+
+
+class PlanejamentoMensalViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para Planejamento Financeiro Mensal do Usuário.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PlanejamentoMensalSerializer
+
+    def get_queryset(self):
+        return PlanejamentoMensal.objects.filter(usuario=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)
+
+
+class ResumoPlanejamentoAPIView(APIView):
+    """
+    APIView que consolida o resumo do Planejamento Consciente vs Realizado do mês.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        mes_str = request.query_params.get('mes')
+        hoje = date.today()
+        if mes_str:
+            try:
+                dt_ref = datetime.strptime(mes_str, "%Y-%m").date().replace(day=1)
+            except ValueError:
+                dt_ref = hoje.replace(day=1)
+        else:
+            dt_ref = hoje.replace(day=1)
+
+        usuario = request.user
+        plan = PlanejamentoMensal.objects.filter(usuario=usuario, mes_referencia=dt_ref).first()
+        if not plan:
+            plan = PlanejamentoMensal.objects.filter(usuario=usuario).order_by('-mes_referencia').first()
+
+        receita_esperada = plan.receita_esperada if plan else Decimal('0.00')
+        meta_investimento = plan.meta_investimento_mensal if plan else Decimal('0.00')
+        pct_essencial = plan.alocacao_essenciais_pct if plan else 50
+        pct_estilo = plan.alocacao_estilo_vida_pct if plan else 30
+        pct_invest = plan.alocacao_investimentos_pct if plan else 20
+
+        # Lançamentos do mês
+        movs_mes = Movimentacao.objects.filter(
+            usuario=usuario,
+            data__year=dt_ref.year,
+            data__month=dt_ref.month
+        )
+
+        receita_realizada = movs_mes.filter(tipo='RECEITA').aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+        despesa_realizada = movs_mes.filter(tipo='DESPESA').aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+        # Soma das parcelas ativas que cobrem o mês de referência
+        parcelamentos = Parcelamento.objects.filter(usuario=usuario)
+        total_parcelas_mes = Decimal('0.00')
+        for p in parcelamentos:
+            d_inicio = p.data_primeira_parcela.replace(day=1)
+            # adiciona p.num_parcelas meses
+            m_end = (d_inicio.month - 1 + p.num_parcelas)
+            y_end = d_inicio.year + (m_end // 12)
+            m_end = (m_end % 12) + 1
+            d_fim = date(y_end, m_end, 1)
+
+            if d_inicio <= dt_ref < d_fim:
+                total_parcelas_mes += p.valor_parcela
+
+        # Base de cálculo para o orçamento consciente (maior entre receita esperada e receita realizada)
+        base_receita = max(receita_esperada, receita_realizada)
+        teto_essenciais = base_receita * Decimal(str(pct_essencial / 100))
+        teto_estilo_vida = base_receita * Decimal(str(pct_estilo / 100))
+        teto_investimentos = base_receita * Decimal(str(pct_invest / 100))
+
+        disponivel_livre = base_receita - despesa_realizada - total_parcelas_mes - meta_investimento
+
+        # Cálculo do Score de Saúde (0 - 100)
+        score = 100
+        if base_receita > 0:
+            taxa_comprometimento_parcelas = (total_parcelas_mes / base_receita) * 100
+            if taxa_comprometimento_parcelas > 30:
+                score -= 30
+            elif taxa_comprometimento_parcelas > 15:
+                score -= 15
+
+            if despesa_realizada > base_receita:
+                score -= 40
+            elif (despesa_realizada + total_parcelas_mes) > base_receita:
+                score -= 20
+
+            if meta_investimento > 0 and (receita_realizada < meta_investimento):
+                score -= 10
+
+        score = max(0, min(100, score))
+
+        return Response({
+            'mes_referencia': dt_ref.strftime("%Y-%m"),
+            'receita_esperada': float(receita_esperada),
+            'receita_realizada': float(receita_realizada),
+            'despesa_realizada': float(despesa_realizada),
+            'compromissos_parcelas': float(total_parcelas_mes),
+            'meta_investimento': float(meta_investimento),
+            'disponivel_livre': float(disponivel_livre),
+            'teto_essenciais': float(teto_essenciais),
+            'teto_estilo_vida': float(teto_estilo_vida),
+            'teto_investimentos': float(teto_investimentos),
+            'score_saude': score,
+            'pct_essenciais': pct_essencial,
+            'pct_estilo_vida': pct_estilo,
+            'pct_investimentos': pct_invest,
+            'has_planejamento': plan is not None,
+            'planejamento_id': plan.id if plan else None
+        })
 
 

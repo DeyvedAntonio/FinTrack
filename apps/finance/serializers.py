@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.categories.models import Categoria
-from .models import Movimentacao, Parcelamento, ConfigCartao
+from .models import Movimentacao, Parcelamento, ConfigCartao, PlanejamentoMensal
 
 
 class MovimentacaoSerializer(serializers.ModelSerializer):
@@ -140,5 +140,24 @@ class ConfigCartaoSerializer(serializers.ModelSerializer):
         if not (1 <= value <= 31):
             raise serializers.ValidationError("O dia de vencimento deve estar entre 1 e 31.")
         return value
+
+
+class PlanejamentoMensalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanejamentoMensal
+        fields = (
+            'id',
+            'uuid',
+            'mes_referencia',
+            'receita_esperada',
+            'meta_investimento_mensal',
+            'alocacao_essenciais_pct',
+            'alocacao_estilo_vida_pct',
+            'alocacao_investimentos_pct',
+            'created_at',
+            'modified_at'
+        )
+        read_only_fields = ('id', 'uuid', 'created_at', 'modified_at')
+
 
 

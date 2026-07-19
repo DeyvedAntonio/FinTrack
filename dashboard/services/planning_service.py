@@ -1,0 +1,39 @@
+from repositories.planning_repository import PlanningRepository
+
+
+class PlanningService:
+    @staticmethod
+    def get_resumo_planejamento(mes=None):
+        status_code, data = PlanningRepository.get_resumo_planejamento(mes)
+        if status_code == 200:
+            return data
+        return None
+
+    @staticmethod
+    def save_planejamento(payload, plan_id=None):
+        if plan_id:
+            status_code, data = PlanningRepository.update_planejamento(plan_id, payload)
+        else:
+            status_code, data = PlanningRepository.create_planejamento(payload)
+        return status_code in (200, 201), data
+
+    @staticmethod
+    def simular_nova_compra(valor_total, num_parcelas, disponivel_atual):
+        parcela_mensal = round(valor_total / num_parcelas, 2) if num_parcelas > 0 else valor_total
+        novo_disponivel = disponivel_atual - parcela_mensal
+        impacto_percentual = round((parcela_mensal / disponivel_atual) * 100, 1) if disponivel_atual > 0 else 100.0
+        
+        recomendacao = "Saudável"
+        if novo_disponivel < 0:
+            recomendacao = "Crítico (Orçamento Estourado)"
+        elif impacto_percentual > 40:
+            recomendacao = "Atenção (Alto Comprometimento da Renda)"
+        elif impacto_percentual > 20:
+            recomendacao = "Moderado"
+
+        return {
+            'valor_parcela': parcela_mensal,
+            'novo_disponivel': novo_disponivel,
+            'impacto_percentual': impacto_percentual,
+            'recomendacao': recomendacao
+        }
