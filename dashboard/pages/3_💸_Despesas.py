@@ -35,7 +35,7 @@ if "show_despesa_form" not in st.session_state:
 
 # Botão para Nova Despesa
 with col_header:
-    if st.button("➕ Nova Despesa", help="Nova Despesa"):
+    if st.button("➕ Nova Despesa", key="nova_despesa", help="Nova Despesa"):
         st.session_state["edit_despesa"] = None
         st.session_state["show_despesa_form"] = True
 

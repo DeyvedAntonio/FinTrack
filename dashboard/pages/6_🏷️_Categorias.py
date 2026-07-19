@@ -1,6 +1,9 @@
 import streamlit as st
+# pyrefly: ignore [missing-import]
 from core.theme import apply_theme, format_currency
+# pyrefly: ignore [missing-import]
 from core.session import check_authentication
+# pyrefly: ignore [missing-import]
 from services.category_service import CategoryService
 
 st.set_page_config(page_title="Categorias | FinTrack", page_icon="🏷️", layout="wide")
@@ -17,7 +20,7 @@ if "show_cat_form" not in st.session_state:
     st.session_state["show_cat_form"] = False
 
 # Botão para Nova Categoria
-if st.button("➕ Nova Categoria", help="Nova Categoria"):
+if st.button("➕ Nova Categoria", key="nova_categoria", help="Nova Categoria"):
     st.session_state["edit_cat"] = None
     st.session_state["show_cat_form"] = True
 
@@ -84,11 +87,7 @@ if categorias:
                         st.session_state["show_cat_form"] = True
                         st.rerun()
                 with c3:
-<<<<<<< HEAD
                     if st.button("🗑️ Excluir", key=f"del_rec_cat_{item['id']}", help="Excluir"):
-=======
-                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}", help="Excluir"):
->>>>>>> 76da905c987dcb14d81055ad1ca67286231bbaea
                         succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")
@@ -115,11 +114,7 @@ if categorias:
                         st.session_state["show_cat_form"] = True
                         st.rerun()
                 with c3:
-<<<<<<< HEAD
                     if st.button("🗑️ Excluir", key=f"del_desp_cat_{item['id']}", help="Excluir"):
-=======
-                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}", help="Excluir"):
->>>>>>> 76da905c987dcb14d81055ad1ca67286231bbaea
                         succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")
