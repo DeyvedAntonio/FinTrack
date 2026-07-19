@@ -107,3 +107,42 @@ if st.button("🚪 Sair da Conta", use_container_width=True):
     st.session_state["user"] = None
     st.success("Sessão encerrada.")
     st.rerun()
+
+st.divider()
+
+# 5. Zona de Atenção - LGPD e Exclusão de Perfil
+st.subheader("⚠️ Zona de Atenção (LGPD & Privacidade)")
+
+st.warning("""
+**Direito de Eliminação de Dados e Retenção Legal (Art. 16, I da LGPD - Lei nº 13.709/2018):**  
+Ao solicitar a exclusão da sua conta, seus dados pessoais identificáveis (nome, e-mail e foto) serão **permanentemente anonimizados** e seu acesso à plataforma será revogado imediatamente. 
+
+Em estrito cumprimento à legislação fiscal e cível brasileira, seus registros de movimentações financeiras históricas serão mantidos de forma **anonimizada pelo prazo legal de 5 anos** para auditoria e prestação de contas, sem qualquer vinculação aos seus dados pessoais.
+""")
+
+with st.expander("🚨 Solicitar Exclusão da Conta e Anonimização de Dados", expanded=False):
+    st.write("Esta ação é **irreversível**. Para prosseguir, confirme sua senha atual abaixo:")
+    
+    with st.form("form_excluir_conta"):
+        confirm_password = st.text_input("Confirme sua Senha Atual", type="password", placeholder="Digite sua senha para confirmar")
+        confirm_checkbox = st.checkbox("Estou ciente de que meus dados pessoais serão anonimizados e o acesso será encerrado permanentemente.")
+        
+        submit_delete = st.form_submit_button("Excluir minha conta e anonimizar dados", use_container_width=True)
+
+        if submit_delete:
+            if not confirm_password:
+                st.error("Digite sua senha para confirmar a exclusão.")
+            elif not confirm_checkbox:
+                st.error("Marque a caixa de seleção confirmando que está ciente da irreversibilidade da ação.")
+            else:
+                with st.spinner("Processando anonimização e exclusão da conta..."):
+                    success_d, res_d = api_request("POST", "auth/delete-account/", {"password": confirm_password})
+                    if success_d:
+                        st.session_state["token"] = None
+                        st.session_state["user"] = None
+                        st.success("Sua conta foi inativada e seus dados pessoais foram permanentemente anonimizados conforme a LGPD.")
+                        st.rerun()
+                    else:
+                        err_msg = res_d.get("password", [res_d.get("detail", "Erro ao excluir conta.")])[0] if isinstance(res_d.get("password"), list) else res_d.get("detail", "Erro ao excluir conta.")
+                        st.error(err_msg)
+

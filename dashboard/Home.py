@@ -38,8 +38,6 @@ if not st.session_state["token"]:
     col_left, col_center, col_right = st.columns([1, 2, 1])
     
     with col_center:
-        st.markdown('<div class="kpi-card">', unsafe_allow_html=True)
-        
         # Modo: LOGIN
         if st.session_state["auth_mode"] == "login":
             st.subheader("Entrar")
@@ -137,8 +135,6 @@ if not st.session_state["token"]:
             if st.button("Voltar para o Login", use_container_width=True):
                 st.session_state["auth_mode"] = "login"
                 st.rerun()
-
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # Se estiver AUTENTICADO
 else:

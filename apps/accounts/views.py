@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.utils import timezone
 from rest_framework import status, permissions, generics
 from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -13,7 +14,8 @@ from .serializers import (
     RegisterSerializer,
     LoginSerializer,
     ChangePasswordSerializer,
-    PasswordResetRequestSerializer
+    PasswordResetRequestSerializer,
+    DeleteAccountSerializer
 )
 
 User = get_user_model()
@@ -148,3 +150,46 @@ class PasswordResetAPIView(APIView):
         return Response({
             'message': 'Se o e-mail estiver cadastrado em nosso sistema, você receberá um link para redefinir sua senha.'
         }, status=status.HTTP_200_OK)
+
+
+class DeleteAccountAPIView(APIView):
+    """
+    Endpoint para solicitação de exclusão de perfil conforme a LGPD (Art. 16, I).
+    Anonimiza os PIIs do usuário, inativa a conta e encerra os tokens de autenticação,
+    mantendo os dados financeiros de forma anonimizada pelo prazo legal de 5 anos.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = DeleteAccountSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+
+        # Excluir foto de perfil física se existir
+        if user.foto_perfil:
+            user.foto_perfil.delete(save=False)
+
+        # Anonimizar PII (Personally Identifiable Information)
+        user_id = user.id
+        user.first_name = "Usuário Anonimizado"
+        user.last_name = ""
+        user.email = f"anonymized_{user_id}@lgpd.deleted"
+        user.username = f"anonymized_{user_id}"
+        user.set_unusable_password()
+        user.is_active = False
+        user.is_anonymized = True
+        user.anonymized_at = timezone.now()
+        user.save()
+
+        # Invalidação do token REST e encerramento de sessão
+        try:
+            user.auth_token.delete()
+        except (AttributeError, Token.DoesNotExist):
+            pass
+        logout(request)
+
+        return Response({
+            'message': 'Sua conta foi inativada e seus dados pessoais foram permanentemente anonimizados conforme a LGPD. Os registros financeiros serão mantidos anonimizados pelo prazo legal de 5 anos.'
+        }, status=status.HTTP_200_OK)
+

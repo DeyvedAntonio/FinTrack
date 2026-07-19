@@ -16,6 +16,8 @@ class ProfileAndAuthenticationAPITestCase(APITestCase):
         self.profile_url = reverse('accounts:profile')
         self.change_password_url = reverse('accounts:change_password')
 
+        self.delete_account_url = reverse('accounts:delete_account')
+
         self.user = User.objects.create_user(
             username='joao@example.com',
             email='joao@example.com',
@@ -108,3 +110,22 @@ class ProfileAndAuthenticationAPITestCase(APITestCase):
         }
         response = self.client.post(self.change_password_url, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_account_wrong_password(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        response = self.client.post(self.delete_account_url, {'password': 'senha_errada'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_account_success_and_anonymization(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        response = self.client.post(self.delete_account_url, {'password': 'SenhaSegura123!'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_active)
+        self.assertTrue(self.user.is_anonymized)
+        self.assertIsNotNone(self.user.anonymized_at)
+        self.assertEqual(self.user.first_name, 'Usuário Anonimizado')
+        self.assertEqual(self.user.email, f'anonymized_{self.user.id}@lgpd.deleted')
+        self.assertFalse(Token.objects.filter(user=self.user).exists())
+

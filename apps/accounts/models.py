@@ -20,6 +20,15 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
+    is_anonymized = models.BooleanField(
+        'Conta Anonimizada',
+        default=False
+    )
+    anonymized_at = models.DateTimeField(
+        'Data de Anonimização LGPD',
+        null=True,
+        blank=True
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
