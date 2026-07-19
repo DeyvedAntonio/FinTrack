@@ -2,7 +2,15 @@ import os
 import requests
 import streamlit as st
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000/api/v1")
+API_BASE_URL = os.getenv("API_BASE_URL")
+if not API_BASE_URL:
+    try:
+        if "API_BASE_URL" in st.secrets:
+            API_BASE_URL = st.secrets["API_BASE_URL"]
+    except Exception:
+        pass
+if not API_BASE_URL:
+    API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
 
 class BaseRepository:
