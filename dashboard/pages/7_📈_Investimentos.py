@@ -171,8 +171,9 @@ with tab_ativos_hist:
             c_op1, c_op2, c_op3 = st.columns([4, 3, 2])
             with c_op1:
                 badge_color = "🟢" if op["tipo_operacao"] == "COMPRA" else "🔴"
+                obs_op_str = f" | 📝 {op['observacoes']}" if op.get('observacoes') else ""
                 st.write(f"{badge_color} **{op['tipo_operacao_display']}** - **{op['ativo_codigo']}** ({op['ativo_nome']})")
-                st.caption(f"Data: {op['data_operacao']} | Classe: {op['tipo_ativo_display']} {f'| 📝 {op[\"observacoes\"]}' if op.get('observacoes') else ''}")
+                st.caption(f"Data: {op['data_operacao']} | Classe: {op['tipo_ativo_display']}{obs_op_str}")
             with c_op2:
                 st.write(f"**{op['quantidade']} x {format_currency(op['preco_unitario'], moeda)}**")
                 st.caption(f"Total: {format_currency(op['valor_total_operacao'], moeda)} | Taxas: {format_currency(op['taxas'], moeda)}")
