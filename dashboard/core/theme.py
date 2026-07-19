@@ -71,6 +71,22 @@ def apply_theme():
             color: #FFFFFF !important;
         }
 
+        /* Botões Neutros / Cinza (Sair da Conta / Logout) */
+        div[class*="st-key-btn_logout"] button,
+        div[class*="st-key-logout"] button,
+        div[class*="st-key-gray"] button {
+            background-color: #4B5563 !important;
+            color: #FFFFFF !important;
+            border: 1px solid #374151 !important;
+        }
+
+        div[class*="st-key-btn_logout"] button:hover,
+        div[class*="st-key-logout"] button:hover,
+        div[class*="st-key-gray"] button:hover {
+            background-color: #374151 !important;
+            color: #FFFFFF !important;
+        }
+
         /* KPI Cards */
         .kpi-card {
             background-color: #1F2937;
