@@ -17,6 +17,10 @@ class Movimentacao(BaseModel):
         DINHEIRO = 'DINHEIRO', 'Dinheiro'
         BOLETO = 'BOLETO', 'Boleto'
 
+    class FrequenciaRecorrencia(models.TextChoices):
+        MENSAL = 'MENSAL', 'Mensal'
+        ANUAL = 'ANUAL', 'Anual'
+
     descricao = models.CharField('Descrição', max_length=255)
     valor = models.DecimalField('Valor', max_digits=12, decimal_places=2)
     tipo = models.CharField('Tipo', max_length=10, choices=TipoMovimentacao.choices)
@@ -41,6 +45,21 @@ class Movimentacao(BaseModel):
     )
     observacoes = models.TextField('Observações', blank=True, null=True)
     confirmado = models.BooleanField('Confirmado / Pago', default=False)
+    is_recorrente = models.BooleanField('É Recorrente?', default=False)
+    frequencia_recorrencia = models.CharField(
+        'Frequência de Recorrência',
+        max_length=20,
+        choices=FrequenciaRecorrencia.choices,
+        default=FrequenciaRecorrencia.MENSAL,
+        blank=True,
+        null=True
+    )
+    data_fim_recorrencia = models.DateField(
+        'Data Final da Recorrência',
+        null=True,
+        blank=True,
+        help_text='Deixe em branco para recorrência por tempo indeterminado'
+    )
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -60,6 +79,10 @@ class Movimentacao(BaseModel):
         super().clean()
         if self.valor is not None and self.valor <= 0:
             raise ValidationError({'valor': 'O valor da movimentação deve ser estritamente maior que zero.'})
+        
+        if self.is_recorrente and self.data_fim_recorrencia and self.data:
+            if self.data_fim_recorrencia < self.data:
+                raise ValidationError({'data_fim_recorrencia': 'A data final da recorrência deve ser maior ou igual à data de início.'})
         
         if self.categoria and hasattr(self, 'usuario') and self.usuario:
             if self.categoria.usuario != self.usuario:

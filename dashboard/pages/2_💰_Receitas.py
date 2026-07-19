@@ -55,6 +55,19 @@ if st.session_state["show_receita_form"]:
 
         observacoes = st.text_area("Observações", value=rec_obj.get("observacoes", "") or "")
 
+        is_recorrente = st.checkbox("É uma receita recorrente?", value=rec_obj.get("is_recorrente", False))
+        data_fim_rec = None
+        if is_recorrente:
+            d_fim_val = None
+            if rec_obj.get("data_fim_recorrencia"):
+                try:
+                    d_fim_val = datetime.datetime.strptime(rec_obj["data_fim_recorrencia"], "%Y-%m-%d").date()
+                except Exception:
+                    pass
+            use_fim = st.checkbox("Definir Data Limite Final da Recorrência?", value=d_fim_val is not None)
+            if use_fim:
+                data_fim_rec = st.date_input("Data Final da Recorrência", value=d_fim_val or data_rec)
+
         col_save, col_cancel = st.columns(2)
         with col_save:
             btn_salvar = st.form_submit_button("Salvar Receita", use_container_width=True)
@@ -74,7 +87,10 @@ if st.session_state["show_receita_form"]:
                     "tipo": "RECEITA",
                     "data": str(data_rec),
                     "categoria": cat_id[0],
-                    "observacoes": observacoes
+                    "observacoes": observacoes,
+                    "is_recorrente": is_recorrente,
+                    "frequencia_recorrencia": "MENSAL",
+                    "data_fim_recorrencia": str(data_fim_rec) if is_recorrente and data_fim_rec else None
                 }
                 success, res = FinanceService.save_movimentacao(rec_obj.get("id"), payload)
                 if success:
@@ -124,7 +140,8 @@ if data_receitas:
         c_info, c_val, c_actions = st.columns([4, 2, 2])
         with c_info:
             obs_str = f" | 📝 {item['observacoes']}" if item.get('observacoes') else ""
-            st.markdown(f"**{item['descricao']}**")
+            rec_tag = " 🔁 Recorrente" if item.get('is_recorrente') else ""
+            st.markdown(f"**{item['descricao']}**{rec_tag}")
             st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']}{obs_str}")
         with c_val:
             st.markdown(f"<span style='color: #10B981; font-weight: bold; font-size: 1.2rem;'>+ {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)

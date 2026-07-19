@@ -1,7 +1,7 @@
 import csv
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import HttpResponse
 from rest_framework import viewsets, permissions, status, generics
 from rest_framework.decorators import action
@@ -10,7 +10,6 @@ from rest_framework.views import APIView
 
 from .models import Movimentacao, Parcelamento, ConfigCartao, PlanejamentoMensal
 from .serializers import MovimentacaoSerializer, ParcelamentoSerializer, ConfigCartaoSerializer, PlanejamentoMensalSerializer
-
 
 
 class MovimentacaoViewSet(viewsets.ModelViewSet):
@@ -38,12 +37,23 @@ class MovimentacaoViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(cartao_id=cartao)
 
         mes = self.request.query_params.get('mes')
-        if mes and mes.isdigit():
-            queryset = queryset.filter(data__month=int(mes))
-
         ano = self.request.query_params.get('ano')
-        if ano and ano.isdigit():
-            queryset = queryset.filter(data__year=int(ano))
+        if mes and mes.isdigit() and ano and ano.isdigit():
+            m_int, a_int = int(mes), int(ano)
+            first_day = date(a_int, m_int, 1)
+            next_m = m_int % 12 + 1
+            next_y = a_int + (1 if m_int == 12 else 0)
+            last_day = date(next_y, next_m, 1) - timedelta(days=1)
+            
+            queryset = queryset.filter(
+                Q(data__year=a_int, data__month=m_int, is_recorrente=False) |
+                Q(is_recorrente=True, data__lte=last_day, data_fim_recorrencia__gte=first_day) |
+                Q(is_recorrente=True, data__lte=last_day, data_fim_recorrencia__isnull=True)
+            )
+        elif mes and mes.isdigit():
+            queryset = queryset.filter(Q(data__month=int(mes)) | Q(is_recorrente=True))
+        elif ano and ano.isdigit():
+            queryset = queryset.filter(Q(data__year=int(ano)) | Q(is_recorrente=True))
 
         confirmado = self.request.query_params.get('confirmado')
         if confirmado is not None:
@@ -178,11 +188,15 @@ class ResumoPlanejamentoAPIView(APIView):
         pct_estilo = plan.alocacao_estilo_vida_pct if plan else 30
         pct_invest = plan.alocacao_investimentos_pct if plan else 20
 
-        # Lançamentos do mês
-        movs_mes = Movimentacao.objects.filter(
-            usuario=usuario,
-            data__year=dt_ref.year,
-            data__month=dt_ref.month
+        # Lançamentos do mês (diretos + recorrentes ativos no período)
+        next_m = dt_ref.month % 12 + 1
+        next_y = dt_ref.year + (1 if dt_ref.month == 12 else 0)
+        last_day = date(next_y, next_m, 1) - timedelta(days=1)
+
+        movs_mes = Movimentacao.objects.filter(usuario=usuario).filter(
+            Q(data__year=dt_ref.year, data__month=dt_ref.month, is_recorrente=False) |
+            Q(is_recorrente=True, data__lte=last_day, data_fim_recorrencia__gte=dt_ref) |
+            Q(is_recorrente=True, data__lte=last_day, data_fim_recorrencia__isnull=True)
         )
 
         receita_realizada = movs_mes.filter(tipo='RECEITA').aggregate(total=Sum('valor'))['total'] or Decimal('0.00')

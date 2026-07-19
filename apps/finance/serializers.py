@@ -28,6 +28,9 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
             'cartao_nome',
             'observacoes',
             'confirmado',
+            'is_recorrente',
+            'frequencia_recorrencia',
+            'data_fim_recorrencia',
             'created_at',
             'modified_at'
         )
@@ -43,6 +46,14 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
         usuario = request.user if request else None
         
         categoria = attrs.get('categoria', self.instance.categoria if self.instance else None)
+        tipo = attrs.get('tipo', self.instance.tipo if self.instance else None)
+        cartao = attrs.get('cartao', self.instance.cartao if self.instance else None)
+        is_recorrente = attrs.get('is_recorrente', self.instance.is_recorrente if self.instance else False)
+        data = attrs.get('data', self.instance.data if self.instance else None)
+        data_fim = attrs.get('data_fim_recorrencia', self.instance.data_fim_recorrencia if self.instance else None)
+
+        if is_recorrente and data and data_fim and data_fim < data:
+            raise serializers.ValidationError({"data_fim_recorrencia": "A data final da recorrência deve ser maior ou igual à data de início."})
         cartao = attrs.get('cartao', self.instance.cartao if self.instance else None)
         tipo = attrs.get('tipo', self.instance.tipo if self.instance else None)
 

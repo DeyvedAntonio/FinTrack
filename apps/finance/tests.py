@@ -223,4 +223,35 @@ class MovimentacaoAPITestCase(APITestCase):
         self.assertIn('disponivel_livre', res_resumo.data)
         self.assertIn('score_saude', res_resumo.data)
 
+    def test_movimentacao_recorrente_and_data_fim(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token1.key)
+        
+        # Teste criando receita recorrente sem data fim
+        payload_rec = {
+            'descricao': 'Salário Fixo Recorrente',
+            'valor': '4500.00',
+            'tipo': Movimentacao.TipoMovimentacao.RECEITA,
+            'data': '2026-01-05',
+            'categoria': self.cat_salario.id,
+            'is_recorrente': True,
+            'frequencia_recorrencia': 'MENSAL'
+        }
+        res1 = self.client.post(self.list_url, payload_rec)
+        self.assertEqual(res1.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(res1.data['is_recorrente'])
+
+        # Teste criando despesa recorrente com data fim inválida (menor que a data inicial)
+        payload_invalid = {
+            'descricao': 'Assinatura',
+            'valor': '50.00',
+            'tipo': Movimentacao.TipoMovimentacao.DESPESA,
+            'data': '2026-06-01',
+            'categoria': self.cat_alimentacao.id,
+            'is_recorrente': True,
+            'data_fim_recorrencia': '2026-05-01'  # Inválida
+        }
+        res_inv = self.client.post(self.list_url, payload_invalid)
+        self.assertEqual(res_inv.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('data_fim_recorrencia', res_inv.data)
+
 

@@ -77,6 +77,19 @@ if st.session_state["show_despesa_form"]:
 
         observacoes = st.text_area("Observações", value=desp_obj.get("observacoes", "") or "")
 
+        is_recorrente = st.checkbox("É uma despesa recorrente?", value=desp_obj.get("is_recorrente", False))
+        data_fim_rec = None
+        if is_recorrente:
+            d_fim_val = None
+            if desp_obj.get("data_fim_recorrencia"):
+                try:
+                    d_fim_val = datetime.datetime.strptime(desp_obj["data_fim_recorrencia"], "%Y-%m-%d").date()
+                except Exception:
+                    pass
+            use_fim = st.checkbox("Definir Data Limite Final da Recorrência?", value=d_fim_val is not None)
+            if use_fim:
+                data_fim_rec = st.date_input("Data Final da Recorrência", value=d_fim_val or data_desp)
+
         col_save, col_cancel = st.columns(2)
         with col_save:
             btn_salvar = st.form_submit_button("Salvar Despesa", use_container_width=True)
@@ -98,7 +111,10 @@ if st.session_state["show_despesa_form"]:
                     "categoria": cat_id[0],
                     "forma_pagamento": forma_pagamento_key,
                     "cartao": cartao_id_selected,
-                    "observacoes": observacoes
+                    "observacoes": observacoes,
+                    "is_recorrente": is_recorrente,
+                    "frequencia_recorrencia": "MENSAL",
+                    "data_fim_recorrencia": str(data_fim_rec) if is_recorrente and data_fim_rec else None
                 }
                 success, res = FinanceService.save_movimentacao(desp_obj.get("id"), payload)
                 if success:
@@ -155,7 +171,8 @@ if data_despesas:
         with c_info:
             cartao_str = f" | 💳 {item['cartao_nome']}" if item.get('cartao_nome') else ""
             obs_str = f" | 📝 {item['observacoes']}" if item.get('observacoes') else ""
-            st.markdown(f"**{item['descricao']}**")
+            rec_tag = " 🔁 Recorrente" if item.get('is_recorrente') else ""
+            st.markdown(f"**{item['descricao']}**{rec_tag}")
             st.caption(f"📅 {item['data']} | 🏷️ {item['categoria_nome']} | 💵 {item.get('forma_pagamento_display') or 'Não informada'}{cartao_str}{obs_str}")
         with c_val:
             st.markdown(f"<span style='color: #EF4444; font-weight: bold; font-size: 1.2rem;'>- {format_currency(item['valor'], moeda)}</span>", unsafe_allow_html=True)
