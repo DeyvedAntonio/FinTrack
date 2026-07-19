@@ -84,7 +84,11 @@ if categorias:
                         st.session_state["show_cat_form"] = True
                         st.rerun()
                 with c3:
+<<<<<<< HEAD
                     if st.button("🗑️ Excluir", key=f"del_rec_cat_{item['id']}", help="Excluir"):
+=======
+                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}", help="Excluir"):
+>>>>>>> 76da905c987dcb14d81055ad1ca67286231bbaea
                         succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")
@@ -111,7 +115,11 @@ if categorias:
                         st.session_state["show_cat_form"] = True
                         st.rerun()
                 with c3:
+<<<<<<< HEAD
                     if st.button("🗑️ Excluir", key=f"del_desp_cat_{item['id']}", help="Excluir"):
+=======
+                    if st.button("🗑️ Excluir", key=f"del_c_{item['id']}", help="Excluir"):
+>>>>>>> 76da905c987dcb14d81055ad1ca67286231bbaea
                         succ_del, res_del = CategoryService.delete_category(item["id"])
                         if succ_del:
                             st.success("Categoria excluída.")
