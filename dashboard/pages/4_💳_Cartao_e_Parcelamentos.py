@@ -94,43 +94,45 @@ with tab_cartoes:
 with tab_parcelas:
     st.subheader("Gerenciador de Parcelamentos Recorrentes")
     
-    with st.expander("➕ Cadastrar Novo Parcelamento", expanded=False):
-        with st.form("form_novo_parcelamento"):
-            desc_parc = st.text_input("Descrição da Compra Parcelada", placeholder="Ex: Notebook, Celular, Viagem")
-            valor_total_parc = st.number_input("Valor Total Global (R$)", min_value=0.01, step=50.0)
-            num_parc = st.number_input("Número Total de Parcelas", min_value=1, max_value=72, value=12)
-            data_1a = st.date_input("Data da 1ª Parcela")
-            
-            cat_id_parc = st.selectbox("Categoria de Despesa", options=list(cat_options.keys()), format_func=lambda x: cat_options.get(x, ""))
-            
-            cartao_id_parc = None
-            if cartoes:
-                cartao_opts = [None] + list(cartao_options.keys())
-                cartao_id_parc = st.selectbox("Cartão de Crédito Utilizado (Opcional)", options=cartao_opts, format_func=lambda x: "Nenhum" if x is None else cartao_options.get(x, ""))
+    if not cartoes:
+        st.warning("⚠️ Para cadastrar compras parceladas, você precisa ter ao menos 1 cartão de crédito cadastrado na aba 'Meus Cartões de Crédito'.")
+    else:
+        with st.expander("➕ Cadastrar Novo Parcelamento", expanded=False):
+            with st.form("form_novo_parcelamento"):
+                desc_parc = st.text_input("Descrição da Compra Parcelada", placeholder="Ex: Notebook, Celular, Viagem")
+                valor_total_parc = st.number_input("Valor Total Global (R$)", min_value=0.01, step=50.0)
+                num_parc = st.number_input("Número Total de Parcelas", min_value=1, max_value=72, value=12)
+                data_1a = st.date_input("Data da 1ª Parcela")
+                
+                cat_id_parc = st.selectbox("Categoria de Despesa", options=list(cat_options.keys()), format_func=lambda x: cat_options.get(x, ""))
+                cartao_id_parc = st.selectbox("Cartão de Crédito Utilizado *", options=list(cartao_options.keys()), format_func=lambda x: cartao_options.get(x, ""))
 
-            submit_parc = st.form_submit_button("Cadastrar Parcelamento", use_container_width=True)
+                submit_parc = st.form_submit_button("Cadastrar Parcelamento", use_container_width=True)
 
-            if submit_parc:
-                if not desc_parc.strip():
-                    st.error("Preencha a descrição do parcelamento.")
-                elif not cat_id_parc:
-                    st.error("Selecione uma categoria válida.")
-                else:
-                    payload_parc = {
-                        "descricao": desc_parc.strip(),
-                        "valor_total": valor_total_parc,
-                        "num_parcelas": num_parc,
-                        "data_primeira_parcela": data_1a.strftime("%Y-%m-%d"),
-                        "categoria": cat_id_parc,
-                        "cartao": cartao_id_parc
-                    }
-                    with st.spinner("Cadastrando parcelamento..."):
-                        succ_p, res_p = CardService.save_parcelamento(payload_parc)
-                        if succ_p:
-                            st.success("Parcelamento cadastrado com sucesso!")
-                            st.rerun()
-                        else:
-                            st.error(res_p.get("detail", "Erro ao cadastrar parcelamento."))
+                if submit_parc:
+                    if not desc_parc.strip():
+                        st.error("Preencha a descrição do parcelamento.")
+                    elif not cat_id_parc:
+                        st.error("Selecione uma categoria válida.")
+                    elif not cartao_id_parc:
+                        st.error("Selecione um cartão de crédito obrigatório.")
+                    else:
+                        payload_parc = {
+                            "descricao": desc_parc.strip(),
+                            "valor_total": valor_total_parc,
+                            "num_parcelas": num_parc,
+                            "data_primeira_parcela": data_1a.strftime("%Y-%m-%d"),
+                            "categoria": cat_id_parc,
+                            "cartao": cartao_id_parc
+                        }
+                        with st.spinner("Cadastrando parcelamento..."):
+                            succ_p, res_p = CardService.save_parcelamento(payload_parc)
+                            if succ_p:
+                                st.success("Parcelamento cadastrado com sucesso!")
+                                st.rerun()
+                            else:
+                                err_det = res_p.get("cartao", [res_p.get("detail", "Erro ao cadastrar parcelamento.")])
+                                st.error(err_det if isinstance(err_det, str) else err_det[0])
 
     st.divider()
 

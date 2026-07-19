@@ -94,9 +94,8 @@ class Parcelamento(BaseModel):
     )
     cartao = models.ForeignKey(
         'ConfigCartao',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
+        default=1,
         related_name='parcelamentos',
         verbose_name='Cartão de Crédito'
     )
@@ -130,6 +129,8 @@ class Parcelamento(BaseModel):
         if self.categoria and hasattr(self, 'usuario') and self.usuario:
             if self.categoria.usuario != self.usuario:
                 raise ValidationError({'categoria': 'A categoria selecionada não pertence ao seu usuário.'})
+        if not self.cartao_id:
+            raise ValidationError({'cartao': 'O cartão de crédito é obrigatório para compras parceladas.'})
         if self.cartao and hasattr(self, 'usuario') and self.usuario:
             if self.cartao.usuario != self.usuario:
                 raise ValidationError({'cartao': 'O cartão selecionado não pertence ao seu usuário.'})

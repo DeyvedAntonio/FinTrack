@@ -100,6 +100,9 @@ class ParcelamentoSerializer(serializers.ModelSerializer):
         categoria = attrs.get('categoria', self.instance.categoria if self.instance else None)
         cartao = attrs.get('cartao', self.instance.cartao if self.instance else None)
 
+        if not cartao:
+            raise serializers.ValidationError({"cartao": "O cartão de crédito é obrigatório para compras parceladas."})
+
         if usuario and categoria and categoria.usuario != usuario:
             raise serializers.ValidationError({"categoria": "A categoria selecionada não pertence ao seu usuário."})
 
