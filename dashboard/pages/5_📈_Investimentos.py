@@ -178,7 +178,7 @@ with tab_ativos_hist:
                 st.write(f"**{op['quantidade']} x {format_currency(op['preco_unitario'], moeda)}**")
                 st.caption(f"Total: {format_currency(op['valor_total_operacao'], moeda)} | Taxas: {format_currency(op['taxas'], moeda)}")
             with c_op3:
-                if st.button("🗑️ Excluir", key=f"del_op_{op['id']}"):
+                if st.button("🗑️ Excluir", key=f"del_op_{op['id']}", help="Excluir"):
                     succ_del_op, _ = InvestmentService.delete_operacao(op["id"])
                     if succ_del_op:
                         st.success("Operação excluída.")

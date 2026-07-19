@@ -80,7 +80,7 @@ with tab_cartoes:
                     if float(c.get('reducao_mensal_desejada', 0)) > 0:
                         st.caption(f"Meta de redução passiva: {format_currency(c['reducao_mensal_desejada'], moeda)}/mês")
                 with col_act:
-                    if st.button("🗑️ Excluir Cartão", key=f"del_card_{c['id']}"):
+                    if st.button("🗑️ Excluir Cartão", key=f"del_card_{c['id']}", help="Excluir"):
                         succ_del_c, _ = CardService.delete_cartao(c["id"])
                         if succ_del_c:
                             st.success("Cartão removido.")
@@ -150,7 +150,7 @@ with tab_parcelas:
                 st.write(f"**{p['num_parcelas']}x** de **{format_currency(p['valor_parcela'], moeda)}**")
                 st.caption(f"Total: {format_currency(p['valor_total'], moeda)} | 1ª Parcela: {p['data_primeira_parcela']}")
             with col_p3:
-                if st.button("🗑️ Excluir", key=f"del_parc_{p['id']}"):
+                if st.button("🗑️ Excluir", key=f"del_parc_{p['id']}", help="Excluir"):
                     succ_del_p, _ = CardService.delete_parcelamento(p["id"])
                     if succ_del_p:
                         st.success("Parcelamento excluído.")

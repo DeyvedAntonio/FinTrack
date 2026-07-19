@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 
 def apply_theme():
@@ -38,29 +39,39 @@ def apply_theme():
         }
 
         /* Botões de Adição / Novo (Verde) */
-        div.stButton > button[aria-label*="Nova"],
-        div.stButton > button[aria-label*="Novo"],
-        div.stButton > button[aria-label*="Adicionar"] {
+        div.stButton > button[aria-label*="Nova" i],
+        div.stButton > button[aria-label*="Novo" i],
+        div.stButton > button[aria-label*="Adicionar" i],
+        button[aria-label*="Nova" i],
+        button[aria-label*="Novo" i],
+        button[aria-label*="Adicionar" i] {
             background-color: #10B981 !important;
             color: #FFFFFF !important;
             border: none !important;
         }
-        div.stButton > button[aria-label*="Nova"]:hover,
-        div.stButton > button[aria-label*="Novo"]:hover,
-        div.stButton > button[aria-label*="Adicionar"]:hover {
+        div.stButton > button[aria-label*="Nova" i]:hover,
+        div.stButton > button[aria-label*="Novo" i]:hover,
+        div.stButton > button[aria-label*="Adicionar" i]:hover,
+        button[aria-label*="Nova" i]:hover,
+        button[aria-label*="Novo" i]:hover,
+        button[aria-label*="Adicionar" i]:hover {
             background-color: #059669 !important;
             color: #FFFFFF !important;
         }
 
         /* Botões de Excluir / Deletar (Vermelho Opaco) */
-        div.stButton > button[aria-label*="Excluir"],
-        div.stButton > button[aria-label*="Deletar"] {
+        div.stButton > button[aria-label*="Excluir" i],
+        div.stButton > button[aria-label*="Deletar" i],
+        button[aria-label*="Excluir" i],
+        button[aria-label*="Deletar" i] {
             background-color: #DC2626 !important;
             color: #FFFFFF !important;
             border: 1px solid #B91C1C !important;
         }
-        div.stButton > button[aria-label*="Excluir"]:hover,
-        div.stButton > button[aria-label*="Deletar"]:hover {
+        div.stButton > button[aria-label*="Excluir" i]:hover,
+        div.stButton > button[aria-label*="Deletar" i]:hover,
+        button[aria-label*="Excluir" i]:hover,
+        button[aria-label*="Deletar" i]:hover {
             background-color: #B91C1C !important;
             color: #FFFFFF !important;
         }
@@ -95,6 +106,53 @@ def apply_theme():
         }
         </style>
     """, unsafe_allow_html=True)
+
+    components.html("""
+        <script>
+        (function() {
+            const parentWin = window.parent;
+            const parentDoc = parentWin.document;
+
+            if (parentWin._fintrackInterval) {
+                parentWin.clearInterval(parentWin._fintrackInterval);
+            }
+            if (parentWin._fintrackObserver) {
+                try { parentWin._fintrackObserver.disconnect(); } catch(e){}
+            }
+
+            parentWin._styleFinTrackButtons = function() {
+                try {
+                    const buttons = parentDoc.querySelectorAll('button');
+                    buttons.forEach(btn => {
+                        const text = (btn.innerText || btn.textContent || '').trim();
+                        const label = (btn.getAttribute('aria-label') || '').trim();
+                        const title = (btn.getAttribute('title') || '').trim();
+                        const combined = (text + ' ' + label + ' ' + title).toLowerCase();
+                        
+                        if (combined.includes('nova') || combined.includes('novo') || combined.includes('adicionar')) {
+                            btn.style.setProperty('background-color', '#10B981', 'important');
+                            btn.style.setProperty('color', '#FFFFFF', 'important');
+                            btn.style.setProperty('border', 'none', 'important');
+                        } else if (combined.includes('excluir') || combined.includes('deletar')) {
+                            btn.style.setProperty('background-color', '#DC2626', 'important');
+                            btn.style.setProperty('color', '#FFFFFF', 'important');
+                            btn.style.setProperty('border', '1px solid #B91C1C', 'important');
+                        }
+                    });
+                } catch(e) {}
+            };
+
+            parentWin._styleFinTrackButtons();
+            parentWin._fintrackInterval = parentWin.setInterval(parentWin._styleFinTrackButtons, 150);
+
+            try {
+                const obs = new parentWin.MutationObserver(parentWin._styleFinTrackButtons);
+                obs.observe(parentDoc.body, { childList: true, subtree: true });
+                parentWin._fintrackObserver = obs;
+            } catch(e) {}
+        })();
+        </script>
+    """, height=0, width=0)
 
 
 def format_currency(val, currency_code="BRL"):

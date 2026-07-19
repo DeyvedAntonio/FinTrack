@@ -35,7 +35,7 @@ if "show_despesa_form" not in st.session_state:
 
 # Botão para Nova Despesa
 with col_header:
-    if st.button("➕ Nova Despesa"):
+    if st.button("➕ Nova Despesa", help="Nova Despesa"):
         st.session_state["edit_despesa"] = None
         st.session_state["show_despesa_form"] = True
 
@@ -196,7 +196,7 @@ if data_despesas:
                     st.session_state["show_despesa_form"] = True
                     st.rerun()
             with col_act2:
-                if st.button("🗑️ Excluir", key=f"del_desp_{item['id']}"):
+                if st.button("🗑️ Excluir", key=f"del_desp_{item['id']}", help="Excluir"):
                     succ_del, _ = FinanceService.delete_movimentacao(item["id"])
                     if succ_del:
                         st.success("Despesa excluída.")
