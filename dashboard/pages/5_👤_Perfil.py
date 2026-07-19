@@ -100,7 +100,30 @@ with st.form("form_alterar_senha"):
 
 st.divider()
 
-# 4. Botão de Encerramento de Sessão (Logout)
+# 4. Exportação de Dados e Portabilidade (LGPD Art. 18, V)
+st.subheader("📥 Exportação de Dados e Portabilidade (LGPD)")
+st.info("""
+**Direito à Portabilidade dos Dados (Art. 18, V da LGPD):**  
+Você pode realizar o download completo de todos os seus dados cadastrados no FinTrack (informações de perfil, categorias e o histórico completo de movimentações financeiras) em um arquivo no formato CSV.
+""")
+
+if st.button("📦 Gerar Arquivo de Exportação CSV", use_container_width=True):
+    with st.spinner("Gerando arquivo consolidado de dados..."):
+        success_exp, csv_data = api_request("GET", "auth/export-csv/")
+        if success_exp:
+            st.download_button(
+                label="⬇️ Clique aqui para baixar meus_dados_fintrack.csv",
+                data=csv_data,
+                file_name="meus_dados_fintrack.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        else:
+            st.error("Erro ao gerar a exportação dos dados.")
+
+st.divider()
+
+# 5. Botão de Encerramento de Sessão (Logout)
 if st.button("🚪 Sair da Conta", use_container_width=True):
     api_request("POST", "auth/logout/")
     st.session_state["token"] = None

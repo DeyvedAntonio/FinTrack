@@ -17,6 +17,7 @@ class ProfileAndAuthenticationAPITestCase(APITestCase):
         self.change_password_url = reverse('accounts:change_password')
 
         self.delete_account_url = reverse('accounts:delete_account')
+        self.export_csv_url = reverse('accounts:export_csv')
 
         self.user = User.objects.create_user(
             username='joao@example.com',
@@ -128,4 +129,15 @@ class ProfileAndAuthenticationAPITestCase(APITestCase):
         self.assertEqual(self.user.first_name, 'Usuário Anonimizado')
         self.assertEqual(self.user.email, f'anonymized_{self.user.id}@lgpd.deleted')
         self.assertFalse(Token.objects.filter(user=self.user).exists())
+
+    def test_export_user_data_csv(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        response = self.client.get(self.export_csv_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.headers['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('attachment; filename="meus_dados_fintrack.csv"', response.headers['Content-Disposition'])
+        content = response.content.decode('utf-8')
+        self.assertIn('joao@example.com', content)
+        self.assertIn('PERFIL DO USUÁRIO', content)
+
 

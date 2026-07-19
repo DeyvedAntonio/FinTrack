@@ -11,4 +11,5 @@ urlpatterns = [
     path('change-password/', views.ChangePasswordAPIView.as_view(), name='change_password'),
     path('password-reset/', views.PasswordResetAPIView.as_view(), name='password_reset'),
     path('delete-account/', views.DeleteAccountAPIView.as_view(), name='delete_account'),
+    path('export-csv/', views.ExportUserDataAPIView.as_view(), name='export_csv'),
 ]
